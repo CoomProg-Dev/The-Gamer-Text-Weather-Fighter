@@ -26,32 +26,73 @@ namespace The_Gamer_Text_Weather_Fighter
 
     }
 
-
-    class Weapon
+    class Item
     {
-        public int damage = 1;
-        public Weapon(int NewDamage)
+        public string Name { get; set; }
+        public int Weight {get; set;}
+
+        public Item(string Name,int Weight)
         {
-            damage = NewDamage;
+            this.Weight = Weight;
+            this.Name = Name;
         }
     }
 
-    class Material : Item
-    {
 
+    class Weapon : Item
+    {
+        public int Damage { get; set; }
+
+        //the Goodness of the weapon: 1 is perfect 0 is broken
+        public int Quality { get; set; }
+
+        public Weapon(string Name, int Weight, int Damage) : base(Name, Weight)
+        {
+            this.Damage = Damage;
+        }
+
+    }
+
+    class Materials : Item
+    {
+        public Materials(string Name, int Weight) : base(Name, Weight)
+        {
+
+        }
     }
 
     class Program
     {
-        //
-        Weapon weapon = new Weapon()
+
+        #region INITIALIZE OBJECTS/LISTS
+
+        // Creates a new map
+        static Map Town = new Map();
+
+        //Possible Weapons in the game
+        static List<Item> possibleItems = new List<Item>() {
+            new Weapon("sword", 10, 10),
+            new Weapon("dagger", 3, 5),
+            new Weapon("axe", 14, 13),
+            new Weapon("spear", 5, 10)
+        };
 
         //stores all the possible events
-        static List<char> randTiles = new List<char>() { 'b', 'b', 'b', 'b', 'b', 'b', 'b', 'b', 'b', 'b', 'b', 'm', 't', 't', 't', 't', 't', 't', 'r', 'r', 'r', 'r', 'h' };
+        static List<char> randTiles = new List<char>() { 
+            'b', 'b', 'b', 'b', 'b', 'b', 'b', 'b', 'b', 'b', 'b', // 11/23
+            'm', // 1/23
+            't', 't', 't', 't', 't', 't', // 6/23
+            'r', 'r', 'r', 'r',  // 4/23
+            'h' // 1/23
+        };
 
         //Random number
         static readonly Random random = new Random();
 
+        #endregion
+
+        /* %%%%%%%%%%%%% PLAYER STATS %%%%%%%%%%%%% */
+        #region PLAYER STATS/IMPOTANT VARIBALES
         //Player Things-------------
         static bool playerAlive = true;
         static int playerX = 0;
@@ -59,14 +100,12 @@ namespace The_Gamer_Text_Weather_Fighter
         static string currentPlayerTile = "b";
         static int playerHP = 10;
         static int playerSkill = 0;
-        static List<string> playerInventory = new List<string>();
+        static List<Item> playerInventory = new List<Item>();
 
-
-        // Creates a new map
-        static Map Town = new Map();
-
+        #endregion
 
         /* %%%%%%%%%%%%% MAIN %%%%%%%%%%%%% */
+        #region MAIN
         static void Main(string[] args)
         {
 
@@ -104,7 +143,10 @@ namespace The_Gamer_Text_Weather_Fighter
                 TW("-------------Game Over-------------");
             }
         }
+        #endregion
 
+        /* %%%%%%%%%%%%% EXTRA FUNCTIONS %%%%%%%%%%%%% */
+        #region EXTRA FUNCTIONS
 
         static void TW(string text)
         {
@@ -118,51 +160,16 @@ namespace The_Gamer_Text_Weather_Fighter
 
         }
 
-
         static string GetInput()
         {
             string input = Console.ReadLine();
             return input.ToLower();
         }
 
+        #endregion
 
-        static List<string> MapGen(int mapX, int mapY, List<string> mapList, bool check)
-        {
-            //add a check to see if map has already been generated
-            if (check == false)
-            {
-                
-                for (int i = 0; i < mapY; i++)
-                {
-
-                    mapList.Add("");
-
-                    for (int n = 0; n < mapX; n++)
-                    {
-
-                        int randTile = random.Next(randTiles.Count);
-
-                        char currentTile = randTiles[randTile];
-
-
-                        mapList[i] = mapList[i] + currentTile.ToString();
-
-
-                    }
-                }
-
-                //spawn the player
-                int spawnY = random.Next(mapY);
-                int spawnX = random.Next(mapX);
-                playerX = spawnX;
-                playerY = spawnY;
-
-                mapList[playerY] = mapList[playerY].Substring(0, playerX) + "p" + mapList[playerY].Substring(playerX + 1);
-                
-            }
-
-            return mapList;
-        }
+        /* %%%%%%%%%%%%% MAP STUFF %%%%%%%%%%%%% */
+        #region MAP STUFF 
 
         static void PrintMap(int mapX, int mapY, List<string> mapList)
         {
@@ -226,6 +233,49 @@ namespace The_Gamer_Text_Weather_Fighter
             }
             Console.ForegroundColor = ConsoleColor.White;
         }
+
+        static List<string> MapGen(int mapX, int mapY, List<string> mapList, bool check)
+        {
+            //add a check to see if map has already been generated
+            if (check == false)
+            {
+
+                for (int i = 0; i < mapY; i++)
+                {
+
+                    mapList.Add("");
+
+                    for (int n = 0; n < mapX; n++)
+                    {
+
+                        int randTile = random.Next(randTiles.Count);
+
+                        char currentTile = randTiles[randTile];
+
+
+                        mapList[i] = mapList[i] + currentTile.ToString();
+
+
+                    }
+                }
+
+                //spawn the player
+                int spawnY = random.Next(mapY);
+                int spawnX = random.Next(mapX);
+                playerX = spawnX;
+                playerY = spawnY;
+
+                mapList[playerY] = mapList[playerY].Substring(0, playerX) + "p" + mapList[playerY].Substring(playerX + 1);
+
+            }
+
+            return mapList;
+        }
+
+        #endregion
+
+        /* %%%%%%%%%%%%% PLAYER DOES STUFF %%%%%%%%%%%%% */
+        #region PLAYER DOES STUFF
 
         static List<string> PlayerAction(List<string> map, int mapX, int mapY)
         {
@@ -311,15 +361,18 @@ namespace The_Gamer_Text_Weather_Fighter
 
             if (currentPlayerTile == "Y")
             {
-                if (playerInventory.Contains("axe"))
-                {
-                    TW("You have come acrass a tree... Would you like to chop it down?  yes/no");
+                //if (playerInventory.Contains("axe"))
+                //{
+                //    TW("You have come acrass a tree... Would you like to chop it down?  yes/no");
 
-                    if (GetInput() == "yes");
+                //    if (GetInput() == "yes");
 
-                }
+                //}
                 
             }
         }
+
+        #endregion
+
     }
 }
