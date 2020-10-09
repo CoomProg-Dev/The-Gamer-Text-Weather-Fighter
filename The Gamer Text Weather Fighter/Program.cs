@@ -38,7 +38,6 @@ namespace The_Gamer_Text_Weather_Fighter
         }
     }
 
-
     class Weapon : Item
     {
         public int Damage { get; set; }
