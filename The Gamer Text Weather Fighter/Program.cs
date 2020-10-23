@@ -153,6 +153,7 @@ namespace The_Gamer_Text_Weather_Fighter
                 Console.Write(text.Substring(i, 1));
                 System.Threading.Thread.Sleep(50);
             }
+            System.Threading.Thread.Sleep(800);
             Console.WriteLine();
 
         }
