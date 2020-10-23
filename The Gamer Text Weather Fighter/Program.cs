@@ -160,12 +160,6 @@ namespace The_Gamer_Text_Weather_Fighter
 
         }
 
-        static string GetInput()
-        {
-            string input = Console.ReadLine();
-            return input.ToLower();
-        }
-
         static void PlayerGetItem(string name)
         {
            foreach (Item item in possibleItems)
@@ -392,26 +386,52 @@ namespace The_Gamer_Text_Weather_Fighter
 
             if (currentPlayerTile == "t")
             {
-                foreach (Item item in playerInventory)
+                if (CheckInvtryName("axe"))
                 {
-                    if (item.Name == "axe")
-                    {
-                        TW("You have come acrass a tree... Would you like to chop it down?  yes/no");
+                    TW("You have come across a tree... Would you like to chop it down?  yes/no");
 
-                        if (GetInput() == "yes")
-                        {
-                            TW("you chopped down the tree");
-                        }
+                    if (GetInput() == "yes")
+                    {
+                        TW("you chopped down the tree");
                     }
 
-                    
-
+                    else
+                    {
+                        TW("You did not chop down the tree");
+                    }
                 }
-                
+
+                else
+                {
+                    TW("you have come across a tree... you might be able to cut this down some how");
+                }
             }
         }
 
         #endregion
 
+        /* %%%%%%%%%%%%% CHECKS %%%%%%%%%%%%% */
+        #region CHECKS
+
+        static string GetInput()
+        {
+            string input = Console.ReadLine();
+            return input.ToLower();
+        }
+
+        static bool CheckInvtryName(string name)
+        {
+            foreach (Item item in playerInventory)
+            {
+                if (item.Name == name)
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        #endregion
     }
 }

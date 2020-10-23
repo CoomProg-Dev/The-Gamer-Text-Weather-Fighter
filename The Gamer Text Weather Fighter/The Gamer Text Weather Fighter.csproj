@@ -7,6 +7,12 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Remove="obj\**" />
+    <EmbeddedResource Remove="obj\**" />
+    <None Remove="obj\**" />
+  </ItemGroup>
+
+  <ItemGroup>
     <Compile Include="C:\Users\User\source\repos\The-Gamer-Text-Weather-Fighter\The Gamer Text Weather Fighter\Program.cs" Link="Program.cs" />
   </ItemGroup>
 
