@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
+using System.Linq;
 using System.Runtime.CompilerServices;
 
 namespace The_Gamer_Text_Weather_Fighter
@@ -68,8 +69,8 @@ namespace The_Gamer_Text_Weather_Fighter
         // Creates a new map
         static Map Town = new Map();
 
-        //Possible Weapons in the game
-        static List<Item> possibleItems = new List<Item>() {
+        //Possible Items in the game
+        static readonly List<Item> possibleItems = new List<Item>() {
             new Weapon("sword", 10, 10),
             new Weapon("dagger", 3, 5),
             new Weapon("axe", 14, 13),
@@ -77,7 +78,7 @@ namespace The_Gamer_Text_Weather_Fighter
         };
 
         //stores all the possible events
-        static List<char> randTiles = new List<char>() { 
+        static readonly List<char> randTiles = new List<char>() { 
             'b', 'b', 'b', 'b', 'b', 'b', 'b', 'b', 'b', 'b', 'b', // 11/23
             'm', // 1/23
             't', 't', 't', 't', 't', 't', // 6/23
@@ -163,6 +164,31 @@ namespace The_Gamer_Text_Weather_Fighter
         {
             string input = Console.ReadLine();
             return input.ToLower();
+        }
+
+        static void PlayerGetItem(string name)
+        {
+           foreach (Item item in possibleItems)
+            {
+                if (item.Name == name)
+                {
+                    if (item.GetType() == typeof(Weapon))
+                    {
+
+                        Weapon weapon = (Weapon)item;
+                        weapon.Quality = random.Next(50, 100) / 100;
+                        playerInventory.Add(weapon);
+
+                    }
+
+                    else
+                    {
+                        playerInventory.Add(item);
+                    }
+
+                }
+            }
+            
         }
 
         #endregion
@@ -356,17 +382,31 @@ namespace The_Gamer_Text_Weather_Fighter
             if (currentPlayerTile == "h")
             {
                 map[playerY] = map[playerY].Substring(0, playerX) + "H" + map[playerY].Substring(playerX + 1);
+                TW("You enter the house and find an axe... Would you like to pick it up?  yes/no");
+
+                if (GetInput() == "yes")
+                {
+                    PlayerGetItem("axe");
+                }
             }
 
-            if (currentPlayerTile == "Y")
+            if (currentPlayerTile == "t")
             {
-                //if (playerInventory.Contains("axe"))
-                //{
-                //    TW("You have come acrass a tree... Would you like to chop it down?  yes/no");
+                foreach (Item item in playerInventory)
+                {
+                    if (item.Name == "axe")
+                    {
+                        TW("You have come acrass a tree... Would you like to chop it down?  yes/no");
 
-                //    if (GetInput() == "yes");
+                        if (GetInput() == "yes")
+                        {
+                            TW("you chopped down the tree");
+                        }
+                    }
 
-                //}
+                    
+
+                }
                 
             }
         }
