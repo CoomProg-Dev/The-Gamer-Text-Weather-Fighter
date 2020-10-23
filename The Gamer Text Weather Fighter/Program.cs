@@ -1,12 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations;
-using System.Linq;
-using System.Runtime.CompilerServices;
 
 namespace The_Gamer_Text_Weather_Fighter
 {
-    
+
     class Map
     {
         public int mapX = 30;
@@ -30,9 +27,9 @@ namespace The_Gamer_Text_Weather_Fighter
     class Item
     {
         public string Name { get; set; }
-        public int Weight {get; set;}
+        public int Weight { get; set; }
 
-        public Item(string Name,int Weight)
+        public Item(string Name, int Weight)
         {
             this.Weight = Weight;
             this.Name = Name;
@@ -78,7 +75,7 @@ namespace The_Gamer_Text_Weather_Fighter
         };
 
         //stores all the possible events
-        static readonly List<char> randTiles = new List<char>() { 
+        static readonly List<char> randTiles = new List<char>() {
             'b', 'b', 'b', 'b', 'b', 'b', 'b', 'b', 'b', 'b', 'b', // 11/23
             'm', // 1/23
             't', 't', 't', 't', 't', 't', // 6/23
@@ -162,7 +159,7 @@ namespace The_Gamer_Text_Weather_Fighter
 
         static void PlayerGetItem(string name)
         {
-           foreach (Item item in possibleItems)
+            foreach (Item item in possibleItems)
             {
                 if (item.Name == name)
                 {
@@ -182,7 +179,7 @@ namespace The_Gamer_Text_Weather_Fighter
 
                 }
             }
-            
+
         }
 
         #endregion
@@ -271,9 +268,7 @@ namespace The_Gamer_Text_Weather_Fighter
 
                         char currentTile = randTiles[randTile];
 
-
                         mapList[i] = mapList[i] + currentTile.ToString();
-
 
                     }
                 }
@@ -284,11 +279,21 @@ namespace The_Gamer_Text_Weather_Fighter
                 playerX = spawnX;
                 playerY = spawnY;
 
-                mapList[playerY] = mapList[playerY].Substring(0, playerX) + "p" + mapList[playerY].Substring(playerX + 1);
-
+                //mapList[playerY] = mapList[playerY].Substring(0, playerX) + "p" + mapList[playerY].Substring(playerX + 1);
+                EditMapList(mapList, playerX, playerY, "p");
             }
 
             return mapList;
+        }
+
+        static void EditMapList(List<string> mapList, int x, int y, string aString)
+        {
+            mapList[y] = mapList[y].Substring(0, x) + aString + mapList[y].Substring(x + 1);
+        }
+
+        static void CurrentTileErase()
+        {
+            currentPlayerTile = "b";
         }
 
         #endregion
@@ -298,7 +303,7 @@ namespace The_Gamer_Text_Weather_Fighter
 
         static List<string> PlayerAction(List<string> map, int mapX, int mapY)
         {
-            
+
             ConsoleKey thisInput = new ConsoleKey();
 
             while (Console.KeyAvailable == false)
@@ -365,7 +370,7 @@ namespace The_Gamer_Text_Weather_Fighter
             map[playerY] = map[playerY].Substring(0, playerX) + "p" + map[playerY].Substring(playerX + 1);
 
             Events(map);
-            
+
             PrintMap(mapX, mapY, map);
 
             return map;
@@ -392,6 +397,7 @@ namespace The_Gamer_Text_Weather_Fighter
 
                     if (GetInput() == "yes")
                     {
+                        CurrentTileErase();
                         TW("you chopped down the tree");
                     }
 
