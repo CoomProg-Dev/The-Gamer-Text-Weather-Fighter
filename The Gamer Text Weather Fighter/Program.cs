@@ -111,7 +111,7 @@ namespace The_Gamer_Text_Weather_Fighter
             {
 
                 //ask to play a new game
-                TW("Would you like to start a new game?  yes/no");
+                TW("Would you like to start a new game?  yes/no",0);
 
                 if (GetInput() == "yes")
                 {
@@ -137,7 +137,7 @@ namespace The_Gamer_Text_Weather_Fighter
                 }
 
                 Console.Clear();
-                TW("-------------Game Over-------------");
+                TW("-------------Game Over-------------",0);
             }
         }
         #endregion
@@ -145,7 +145,7 @@ namespace The_Gamer_Text_Weather_Fighter
         /* %%%%%%%%%%%%% EXTRA FUNCTIONS %%%%%%%%%%%%% */
         #region EXTRA FUNCTIONS
 
-        static void TW(string text)
+        static void TW(string text, int waitTime)
         {
             Console.WriteLine();
             for (int i = 0; i < text.Length; i++)
@@ -153,7 +153,7 @@ namespace The_Gamer_Text_Weather_Fighter
                 Console.Write(text.Substring(i, 1));
                 System.Threading.Thread.Sleep(50);
             }
-            System.Threading.Thread.Sleep(800);
+            System.Threading.Thread.Sleep(waitTime);
             Console.WriteLine();
 
         }
@@ -382,7 +382,7 @@ namespace The_Gamer_Text_Weather_Fighter
             if (currentPlayerTile == "h")
             {
                 map[playerY] = map[playerY].Substring(0, playerX) + "H" + map[playerY].Substring(playerX + 1);
-                TW("You enter the house and find an axe... Would you like to pick it up?  yes/no");
+                TW("You enter the house and find an axe... Would you like to pick it up?  yes/no",0);
 
                 if (GetInput() == "yes")
                 {
@@ -394,23 +394,23 @@ namespace The_Gamer_Text_Weather_Fighter
             {
                 if (CheckInvtryName("axe"))
                 {
-                    TW("You have come across a tree... Would you like to chop it down?  yes/no");
+                    TW("You have come across a tree... Would you like to chop it down?  yes/no",0);
 
                     if (GetInput() == "yes")
                     {
                         CurrentTileErase();
-                        TW("you chopped down the tree");
+                        TW("you chopped down the tree",800);
                     }
 
                     else
                     {
-                        TW("You did not chop down the tree");
+                        TW("You did not chop down the tree",800);
                     }
                 }
 
                 else
                 {
-                    TW("you have come across a tree... you might be able to cut this down some how");
+                    TW("you have come across a tree... you might be able to cut this down some how",800);
                 }
             }
         }
