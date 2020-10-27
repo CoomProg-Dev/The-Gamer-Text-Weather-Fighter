@@ -407,7 +407,7 @@ namespace The_Gamer_Text_Weather_Fighter
                 map[playerY] = map[playerY].Substring(0, playerX) + "H" + map[playerY].Substring(playerX + 1);
                 TW("You enter the house and find an axe... Would you like to pick it up?  yes/no", 0);
 
-                if (GetInput() == "yes")
+                if (yesAnswers.Contains(GetInput()))
                 {
                     PlayerGetItem("axe");
                 }
@@ -419,7 +419,7 @@ namespace The_Gamer_Text_Weather_Fighter
                 {
                     TW("You have come across a tree... Would you like to chop it down?  yes/no", 0);
 
-                    if (GetInput() == "yes")
+                    if (yesAnswers.Contains(GetInput()))
                     {
                         CurrentTileErase();
                         TW("You chopped down the tree", 800);
