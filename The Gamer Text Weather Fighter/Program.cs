@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 
 namespace The_Gamer_Text_Weather_Fighter
@@ -10,6 +10,7 @@ namespace The_Gamer_Text_Weather_Fighter
         public int mapY = 30;
         public bool isGenerated = false;
 
+        //stores the map as a list of strings
         public List<string> mapList = new List<string>();
 
     }
@@ -61,7 +62,10 @@ namespace The_Gamer_Text_Weather_Fighter
             new Weapon("sword", 10, 10),
             new Weapon("dagger", 3, 5),
             new Weapon("axe", 14, 13),
-            new Weapon("spear", 5, 10)
+            new Weapon("spear", 5, 10),
+            new Item("wood", 1),
+            new Item("stone", 2),
+            new Item("food", 1)
         };
 
         //stores all the possible events
@@ -75,7 +79,7 @@ namespace The_Gamer_Text_Weather_Fighter
 
         //Random number
         static readonly Random random = new Random();
-
+        
         //Affirmative answer list
         static readonly List<string> yesAnswers = new List<string>()
         {
@@ -151,11 +155,17 @@ namespace The_Gamer_Text_Weather_Fighter
 
         static void TW(string text, int waitTime)
         {
+        
             Console.WriteLine();
             for (int i = 0; i < text.Length; i++)
             {
                 Console.Write(text.Substring(i, 1));
                 System.Threading.Thread.Sleep(50);
+                if (Console.KeyAvailable)
+                {
+                    Console.Write(text.Substring(i + 1));
+                    break;
+                }
             }
             System.Threading.Thread.Sleep(waitTime);
             Console.WriteLine();
@@ -325,10 +335,7 @@ namespace The_Gamer_Text_Weather_Fighter
             }
 
             //Move UP
-            if (thisInput == ConsoleKey.W && playerY == 0)
-            {
-                Console.WriteLine("You cant move there");
-            }
+            ValidateMove(thisInput, ConsoleKey.W, playerY , 0);
 
             if (thisInput == ConsoleKey.W && playerY > 0)
             {
@@ -337,10 +344,7 @@ namespace The_Gamer_Text_Weather_Fighter
             }
 
             //Move Down
-            if (thisInput == ConsoleKey.S && playerY == mapY - 1)
-            {
-                Console.WriteLine("You cant move there");
-            }
+            ValidateMove(thisInput, ConsoleKey.S, playerY, mapY - 1);
 
             if (thisInput == ConsoleKey.S && playerY < mapY - 1)
             {
@@ -349,10 +353,7 @@ namespace The_Gamer_Text_Weather_Fighter
             }
 
             //Move Left
-            if (thisInput == ConsoleKey.A && playerX == 0)
-            {
-                Console.WriteLine("You cant move there");
-            }
+            ValidateMove(thisInput, ConsoleKey.A, playerX, 0);
 
             if (thisInput == ConsoleKey.A && playerX > 0)
             {
@@ -361,6 +362,7 @@ namespace The_Gamer_Text_Weather_Fighter
             }
 
             //Move Right
+            ValidateMove(thisInput, ConsoleKey.D, playerX, mapX - 1);
             if (thisInput == ConsoleKey.D && playerX == mapX - 1)
             {
                 Console.WriteLine("You cant move there");
@@ -381,6 +383,23 @@ namespace The_Gamer_Text_Weather_Fighter
             return map;
         }
 
+        //private static void PlayerMove(List<string> map, ConsoleKey thisInput, ConsoleKey checkKey, int playerXY, int checkWall)
+        //{
+        //    if (thisInput == ConsoleKey.W && playerY > 0)
+        //    {
+        //        playerY -= 1;
+        //        currentPlayerTile = map[playerY].Substring(playerX, 1);
+        //    }
+        //}
+
+        private static void ValidateMove(ConsoleKey thisInput, ConsoleKey checkKey,int playerXY, int checkWall)
+        {
+            if (thisInput == checkKey && playerXY == checkWall)
+            {
+                Console.WriteLine("You cant move there");
+            }
+        }
+
         static void Events(List<string> map)
         {
             if (currentPlayerTile == "h")
@@ -388,7 +407,7 @@ namespace The_Gamer_Text_Weather_Fighter
                 map[playerY] = map[playerY].Substring(0, playerX) + "H" + map[playerY].Substring(playerX + 1);
                 TW("You enter the house and find an axe... Would you like to pick it up?  yes/no", 0);
 
-                if (yesAnswers.Contains( GetInput() ))
+                if (GetInput() == "yes")
                 {
                     PlayerGetItem("axe");
                 }
@@ -404,6 +423,7 @@ namespace The_Gamer_Text_Weather_Fighter
                     {
                         CurrentTileErase();
                         TW("You chopped down the tree", 800);
+                        PlayerGetItem("wood");
                     }
 
                     else
