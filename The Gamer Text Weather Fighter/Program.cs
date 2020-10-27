@@ -79,6 +79,20 @@ namespace The_Gamer_Text_Weather_Fighter
 
         //Random number
         static readonly Random random = new Random();
+        
+        //Affirmative answer list
+        static readonly List<string> yesAnswers = new List<string>()
+        {
+            "yes",
+            "y",
+            "affirmative",
+        };
+
+        static readonly List<string> noAnswers = new List<string>()
+        {
+            "no",
+            "n"
+        };
 
         #endregion
 
