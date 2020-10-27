@@ -10,17 +10,7 @@ namespace The_Gamer_Text_Weather_Fighter
         public int mapY = 30;
         public bool isGenerated = false;
 
-        //stores the map as a list of strings
         public List<string> mapList = new List<string>();
-
-        //stores all the possible events
-        //static List<char> randTiles = new List<char>() { 'p', 'b' };
-
-        //public Map(List<string> newTiles)
-        //{
-        //    randTiles = newTiles;
-
-        //}
 
     }
 
@@ -85,6 +75,20 @@ namespace The_Gamer_Text_Weather_Fighter
 
         //Random number
         static readonly Random random = new Random();
+
+        //Affirmative answer list
+        static readonly List<string> yesAnswers = new List<string>()
+        {
+            "yes",
+            "y",
+            "affirmative",
+        };
+
+        static readonly List<string> noAnswers = new List<string>()
+        {
+            "no",
+            "n"
+        };
 
         #endregion
 
@@ -384,7 +388,7 @@ namespace The_Gamer_Text_Weather_Fighter
                 map[playerY] = map[playerY].Substring(0, playerX) + "H" + map[playerY].Substring(playerX + 1);
                 TW("You enter the house and find an axe... Would you like to pick it up?  yes/no", 0);
 
-                if (GetInput() == "yes")
+                if (yesAnswers.Contains( GetInput() ))
                 {
                     PlayerGetItem("axe");
                 }
@@ -399,7 +403,7 @@ namespace The_Gamer_Text_Weather_Fighter
                     if (GetInput() == "yes")
                     {
                         CurrentTileErase();
-                        TW("you chopped down the tree", 800);
+                        TW("You chopped down the tree", 800);
                     }
 
                     else
@@ -410,7 +414,7 @@ namespace The_Gamer_Text_Weather_Fighter
 
                 else
                 {
-                    TW("you have come across a tree... you might be able to cut this down some how", 800);
+                    TW("You have come across a tree... you might be able to cut this down some how", 800);
                 }
             }
         }
