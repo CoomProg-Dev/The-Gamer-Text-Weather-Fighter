@@ -13,15 +13,6 @@ namespace The_Gamer_Text_Weather_Fighter
         //stores the map as a list of strings
         public List<string> mapList = new List<string>();
 
-        //stores all the possible events
-        //static List<char> randTiles = new List<char>() { 'p', 'b' };
-
-        //public Map(List<string> newTiles)
-        //{
-        //    randTiles = newTiles;
-
-        //}
-
     }
 
     class Item
@@ -417,7 +408,7 @@ namespace The_Gamer_Text_Weather_Fighter
                     if (GetInput() == "yes")
                     {
                         CurrentTileErase();
-                        TW("you chopped down the tree", 800);
+                        TW("You chopped down the tree", 800);
                         PlayerGetItem("wood");
                     }
 
@@ -429,7 +420,7 @@ namespace The_Gamer_Text_Weather_Fighter
 
                 else
                 {
-                    TW("you have come across a tree... you might be able to cut this down some how", 800);
+                    TW("You have come across a tree... you might be able to cut this down some how", 800);
                 }
             }
         }
