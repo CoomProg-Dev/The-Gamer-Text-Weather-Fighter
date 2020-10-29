@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Dynamic;
 
 namespace The_Gamer_Text_Weather_Fighter
 {
@@ -49,6 +50,20 @@ namespace The_Gamer_Text_Weather_Fighter
         }
     }
 
+    class Monster
+    {
+        public int Health { get; set; }
+        public string Name { get; set; }
+        public int Damage { get; set; }
+
+        public Monster(int health, string name ,int damage)
+        {
+            Health = health;
+            Name = name;
+            Damage = damage;
+        }
+    }
+
     class Program
     {
 
@@ -71,7 +86,6 @@ namespace The_Gamer_Text_Weather_Fighter
         //stores all the possible events
         static readonly List<char> randTiles = new List<char>() {
             'b', 'b', 'b', 'b', 'b', 'b', 'b', 'b', 'b', 'b', 'b', 'b', 'b', 'b', 'b', 'b', // 11/23
-            'm', // 1/23
             't', 't', 't', 't', 't', 't', // 6/23
             'r', 'r', 'r', 'r',  // 4/23
             'c' // 1/23
@@ -93,9 +107,6 @@ namespace The_Gamer_Text_Weather_Fighter
             "no",
             "n"
         };
-
-        // Check to see if it is the right time to move (you might be reading text so you shouldnt move)
-        static bool moveActivate = true;
 
         #endregion
 
@@ -139,6 +150,8 @@ namespace The_Gamer_Text_Weather_Fighter
 
                     PlayerAction(Town.mapList, Town.mapX, Town.mapY);
 
+                    Events(Town.mapList);
+
                     if (playerHP <= 0)
                     {
                         playerAlive = false;
@@ -172,9 +185,7 @@ namespace The_Gamer_Text_Weather_Fighter
                 }
             }
             System.Threading.Thread.Sleep(waitTime);
-            Console.WriteLine();
-            moveActivate = false;
-            
+            Console.WriteLine(); 
 
         }
 
@@ -241,25 +252,13 @@ namespace The_Gamer_Text_Weather_Fighter
                 if (mapList[i / mapX].Substring(i - (i / mapX * mapX), 1) == "c")
                 {
                     Console.ForegroundColor = ConsoleColor.DarkYellow;
-                    Console.Write("[ ]");
+                    Console.Write("[#]");
                 }
 
                 if (mapList[i / mapX].Substring(i - (i / mapX * mapX), 1) == "C")
                 {
                     Console.ForegroundColor = ConsoleColor.DarkYellow;
-                    Console.Write("[");
-
-                    Console.ForegroundColor = ConsoleColor.Red;
-                    Console.Write("+");
-
-                    Console.ForegroundColor = ConsoleColor.DarkYellow;
-                    Console.Write("]");
-                }
-
-                if (mapList[i / mapX].Substring(i - (i / mapX * mapX), 1) == "m")
-                {
-                    Console.ForegroundColor = ConsoleColor.Magenta;
-                    Console.Write(" ! ");
+                    Console.Write("[ ]");
                 }
 
                 if ((i + 1) % mapX == 0)
@@ -329,7 +328,7 @@ namespace The_Gamer_Text_Weather_Fighter
 
             while (Console.KeyAvailable == false)
             {
-                moveActivate = true;
+                
             }
 
             Console.Clear();
@@ -362,8 +361,6 @@ namespace The_Gamer_Text_Weather_Fighter
             {
                 DisplayInventory(ConsoleKey.Tab);
             }
-
-            Events(map);
 
             PrintMap(mapX, mapY, map);
 
@@ -446,13 +443,13 @@ namespace The_Gamer_Text_Weather_Fighter
         {
             if (currentPlayerTile == "c")
             {
-                map[playerY] = map[playerY].Substring(0, playerX) + "C" + map[playerY].Substring(playerX + 1);
 
                 string loot = possibleItems[random.Next(0, possibleItems.Count)].Name;
                 TW("You open the chest and find an " + loot + "... Would you like to pick it up?  yes/no", 0);
 
                 if (yesAnswers.Contains(GetInput()))
                 {
+                    currentPlayerTile = "C";
                     PlayerGetItem(loot);
                 }
             }
@@ -466,19 +463,19 @@ namespace The_Gamer_Text_Weather_Fighter
                     if (yesAnswers.Contains(GetInput()))
                     {
                         CurrentTileErase();
-                        TW("You chopped down the tree", 600);
+                        TW("You chopped down the tree", 400);
                         PlayerGetItem("wood");
                     }
 
                     else
                     {
-                        TW("You did not chop down the tree", 600);
+                        TW("You did not chop down the tree", 400);
                     }
                 }
 
                 else
                 {
-                    TW("You have come across a tree... you might be able to cut this down some how", 600);
+                    TW("You have come across a tree... you might be able to cut this down some how", 400);
                 }
             }
         }
