@@ -1,5 +1,6 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
+using System.Dynamic;
 
 namespace The_Gamer_Text_Weather_Fighter
 {
@@ -12,15 +13,6 @@ namespace The_Gamer_Text_Weather_Fighter
 
         //stores the map as a list of strings
         public List<string> mapList = new List<string>();
-
-        //stores all the possible events
-        //static List<char> randTiles = new List<char>() { 'p', 'b' };
-
-        //public Map(List<string> newTiles)
-        //{
-        //    randTiles = newTiles;
-
-        //}
 
     }
 
@@ -58,6 +50,20 @@ namespace The_Gamer_Text_Weather_Fighter
         }
     }
 
+    class Monster
+    {
+        public int Health { get; set; }
+        public string Name { get; set; }
+        public int Damage { get; set; }
+
+        public Monster(int health, string name ,int damage)
+        {
+            Health = health;
+            Name = name;
+            Damage = damage;
+        }
+    }
+
     class Program
     {
 
@@ -71,20 +77,36 @@ namespace The_Gamer_Text_Weather_Fighter
             new Weapon("sword", 10, 10),
             new Weapon("dagger", 3, 5),
             new Weapon("axe", 14, 13),
-            new Weapon("spear", 5, 10)
+            new Weapon("spear", 5, 10),
+            new Item("wood", 1),
+            new Item("stone", 2),
+            new Item("food", 1)
         };
 
         //stores all the possible events
         static readonly List<char> randTiles = new List<char>() {
-            'b', 'b', 'b', 'b', 'b', 'b', 'b', 'b', 'b', 'b', 'b', // 11/23
-            'm', // 1/23
+            'b', 'b', 'b', 'b', 'b', 'b', 'b', 'b', 'b', 'b', 'b', 'b', 'b', 'b', 'b', 'b', // 11/23
             't', 't', 't', 't', 't', 't', // 6/23
             'r', 'r', 'r', 'r',  // 4/23
-            'h' // 1/23
+            'c' // 1/23
         };
 
         //Random number
         static readonly Random random = new Random();
+
+        //Affirmative answer list
+        static readonly List<string> yesAnswers = new List<string>()
+        {
+            "yes",
+            "y",
+            "affirmative",
+        };
+
+        static readonly List<string> noAnswers = new List<string>()
+        {
+            "no",
+            "n"
+        };
 
         #endregion
 
@@ -96,7 +118,6 @@ namespace The_Gamer_Text_Weather_Fighter
         static int playerY = 0;
         static string currentPlayerTile = "b";
         static int playerHP = 10;
-        static int playerSkill = 0;
         static List<Item> playerInventory = new List<Item>();
 
         #endregion
@@ -111,7 +132,7 @@ namespace The_Gamer_Text_Weather_Fighter
             {
 
                 //ask to play a new game
-                TW("Would you like to start a new game?  yes/no");
+                TW("Would you like to start a new game?  yes/no", 0);
 
                 if (GetInput() == "yes")
                 {
@@ -129,6 +150,8 @@ namespace The_Gamer_Text_Weather_Fighter
 
                     PlayerAction(Town.mapList, Town.mapX, Town.mapY);
 
+                    Events(Town.mapList);
+
                     if (playerHP <= 0)
                     {
                         playerAlive = false;
@@ -137,7 +160,7 @@ namespace The_Gamer_Text_Weather_Fighter
                 }
 
                 Console.Clear();
-                TW("-------------Game Over-------------");
+                TW("-------------Game Over-------------", 0);
             }
         }
         #endregion
@@ -145,15 +168,24 @@ namespace The_Gamer_Text_Weather_Fighter
         /* %%%%%%%%%%%%% EXTRA FUNCTIONS %%%%%%%%%%%%% */
         #region EXTRA FUNCTIONS
 
-        static void TW(string text)
+        static void TW(string text, int waitTime)
         {
+
             Console.WriteLine();
             for (int i = 0; i < text.Length; i++)
             {
                 Console.Write(text.Substring(i, 1));
                 System.Threading.Thread.Sleep(50);
+
+                if (Console.KeyAvailable)
+                {
+                    Console.Write(text.Substring(i + 1));
+                    Console.ReadKey(true);
+                    break;
+                }
             }
-            Console.WriteLine();
+            System.Threading.Thread.Sleep(waitTime);
+            Console.WriteLine(); 
 
         }
 
@@ -217,28 +249,16 @@ namespace The_Gamer_Text_Weather_Fighter
                     Console.Write(" o ");
                 }
 
-                if (mapList[i / mapX].Substring(i - (i / mapX * mapX), 1) == "h")
+                if (mapList[i / mapX].Substring(i - (i / mapX * mapX), 1) == "c")
+                {
+                    Console.ForegroundColor = ConsoleColor.DarkYellow;
+                    Console.Write("[#]");
+                }
+
+                if (mapList[i / mapX].Substring(i - (i / mapX * mapX), 1) == "C")
                 {
                     Console.ForegroundColor = ConsoleColor.DarkYellow;
                     Console.Write("[ ]");
-                }
-
-                if (mapList[i / mapX].Substring(i - (i / mapX * mapX), 1) == "H")
-                {
-                    Console.ForegroundColor = ConsoleColor.DarkYellow;
-                    Console.Write("[");
-
-                    Console.ForegroundColor = ConsoleColor.Red;
-                    Console.Write("+");
-
-                    Console.ForegroundColor = ConsoleColor.DarkYellow;
-                    Console.Write("]");
-                }
-
-                if (mapList[i / mapX].Substring(i - (i / mapX * mapX), 1) == "m")
-                {
-                    Console.ForegroundColor = ConsoleColor.Magenta;
-                    Console.Write(" ! ");
                 }
 
                 if ((i + 1) % mapX == 0)
@@ -308,7 +328,7 @@ namespace The_Gamer_Text_Weather_Fighter
 
             while (Console.KeyAvailable == false)
             {
-
+                
             }
 
             Console.Clear();
@@ -320,72 +340,117 @@ namespace The_Gamer_Text_Weather_Fighter
             }
 
             //Move UP
-            if (thisInput == ConsoleKey.W && playerY == 0)
-            {
-                Console.WriteLine("You cant move there");
-            }
-
-            if (thisInput == ConsoleKey.W && playerY > 0)
-            {
-                playerY -= 1;
-                currentPlayerTile = map[playerY].Substring(playerX, 1);
-            }
+            ValidateMove(thisInput, ConsoleKey.W, playerY, 0);
+            PlayerMoveUp(map, thisInput);
 
             //Move Down
-            if (thisInput == ConsoleKey.S && playerY == mapY - 1)
-            {
-                Console.WriteLine("You cant move there");
-            }
-
-            if (thisInput == ConsoleKey.S && playerY < mapY - 1)
-            {
-                playerY += 1;
-                currentPlayerTile = map[playerY].Substring(playerX, 1);
-            }
+            ValidateMove(thisInput, ConsoleKey.S, playerY, mapY - 1);
+            PlayerMoveDown(map, mapY, thisInput);
 
             //Move Left
-            if (thisInput == ConsoleKey.A && playerX == 0)
-            {
-                Console.WriteLine("You cant move there");
-            }
-
-            if (thisInput == ConsoleKey.A && playerX > 0)
-            {
-                playerX -= 1;
-                currentPlayerTile = map[playerY].Substring(playerX, 1);
-            }
+            ValidateMove(thisInput, ConsoleKey.A, playerX, 0);
+            PlayerMoveLeft(map, thisInput);
 
             //Move Right
-            if (thisInput == ConsoleKey.D && playerX == mapX - 1)
-            {
-                Console.WriteLine("You cant move there");
-            }
-
-            if (thisInput == ConsoleKey.D && playerX < mapX - 1)
-            {
-                playerX += 1;
-                currentPlayerTile = map[playerY].Substring(playerX, 1);
-            }
+            ValidateMove(thisInput, ConsoleKey.D, playerX, mapX - 1);
+            PlayerMoveRight(map, mapX, thisInput);
 
             map[playerY] = map[playerY].Substring(0, playerX) + "p" + map[playerY].Substring(playerX + 1);
 
-            Events(map);
+            if (thisInput == ConsoleKey.Tab)
+            {
+                DisplayInventory(ConsoleKey.Tab);
+            }
 
             PrintMap(mapX, mapY, map);
 
             return map;
         }
 
+        private static void PlayerMoveRight(List<string> map, int mapX, ConsoleKey thisInput)
+        {
+            if (thisInput == ConsoleKey.D && playerX < mapX - 1)
+            {
+                playerX += 1;
+                currentPlayerTile = map[playerY].Substring(playerX, 1);
+            }
+        }
+
+        private static void PlayerMoveLeft(List<string> map, ConsoleKey thisInput)
+        {
+            if (thisInput == ConsoleKey.A && playerX > 0)
+            {
+                playerX -= 1;
+                currentPlayerTile = map[playerY].Substring(playerX, 1);
+            }
+        }
+
+        private static void PlayerMoveDown(List<string> map, int mapY, ConsoleKey thisInput)
+        {
+            if (thisInput == ConsoleKey.S && playerY < mapY - 1)
+            {
+                playerY += 1;
+                currentPlayerTile = map[playerY].Substring(playerX, 1);
+            }
+        }
+
+        private static void PlayerMoveUp(List<string> map, ConsoleKey thisInput)
+        {
+            if (thisInput == ConsoleKey.W && playerY > 0)
+            {
+                playerY -= 1;
+                currentPlayerTile = map[playerY].Substring(playerX, 1);
+            }
+        }
+
+        private static void DisplayInventory( ConsoleKey thisInput)
+        {
+            Console.WriteLine("Inventory:");
+            foreach (Item item in playerInventory)
+            {
+                Console.WriteLine(item.Name);
+            } 
+
+            while (!Console.KeyAvailable)
+            {
+
+            }
+
+            if (Console.KeyAvailable)
+            {
+                Console.ReadKey(true);
+            }
+        }
+
+        //private static void PlayerMove(List<string> map, ConsoleKey thisInput, ConsoleKey checkKey, int playerXY, int checkWall)
+        //{
+        //    if (thisInput == ConsoleKey.W && playerY > 0)
+        //    {
+        //        playerY -= 1;
+        //        currentPlayerTile = map[playerY].Substring(playerX, 1);
+        //    }
+        //}
+
+        private static void ValidateMove(ConsoleKey thisInput, ConsoleKey checkKey, int playerXY, int checkWall)
+        {
+            if (thisInput == checkKey && playerXY == checkWall)
+            {
+                Console.WriteLine("You cant move there");
+            }
+        }
+
         static void Events(List<string> map)
         {
-            if (currentPlayerTile == "h")
+            if (currentPlayerTile == "c")
             {
-                map[playerY] = map[playerY].Substring(0, playerX) + "H" + map[playerY].Substring(playerX + 1);
-                TW("You enter the house and find an axe... Would you like to pick it up?  yes/no");
 
-                if (GetInput() == "yes")
+                string loot = possibleItems[random.Next(0, possibleItems.Count)].Name;
+                TW("You open the chest and find an " + loot + "... Would you like to pick it up?  yes/no", 0);
+
+                if (yesAnswers.Contains(GetInput()))
                 {
-                    PlayerGetItem("axe");
+                    currentPlayerTile = "C";
+                    PlayerGetItem(loot);
                 }
             }
 
@@ -393,23 +458,24 @@ namespace The_Gamer_Text_Weather_Fighter
             {
                 if (CheckInvtryName("axe"))
                 {
-                    TW("You have come across a tree... Would you like to chop it down?  yes/no");
+                    TW("You have come across a tree... Would you like to chop it down?  yes/no", 0);
 
-                    if (GetInput() == "yes")
+                    if (yesAnswers.Contains(GetInput()))
                     {
                         CurrentTileErase();
-                        TW("you chopped down the tree");
+                        TW("You chopped down the tree", 400);
+                        PlayerGetItem("wood");
                     }
 
                     else
                     {
-                        TW("You did not chop down the tree");
+                        TW("You did not chop down the tree", 400);
                     }
                 }
 
                 else
                 {
-                    TW("you have come across a tree... you might be able to cut this down some how");
+                    TW("You have come across a tree... you might be able to cut this down some how", 400);
                 }
             }
         }
