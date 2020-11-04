@@ -3,7 +3,7 @@
   <PropertyGroup>
     <OutputType>Exe</OutputType>
     <TargetFramework>netcoreapp3.1</TargetFramework>
-    <RootNamespace>The_Gamer_Text_Weather_Fighter</RootNamespace>
+    <RootNamespace>Hues_Adventure</RootNamespace>
   </PropertyGroup>
 
   <ItemGroup>
@@ -13,7 +13,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Compile Include="C:\Users\User\source\repos\The-Gamer-Text-Weather-Fighter\The Gamer Text Weather Fighter\Program.cs" Link="Program.cs" />
+    <Compile Include="C:\Users\User\source\repos\Hues-Adventure\Hues Adventure\Program.cs" Link="Program.cs" />
   </ItemGroup>
 
 </Project>
