@@ -33,7 +33,7 @@ namespace Hues_Adventure
         public int Damage { get; set; }
 
         //the Goodness of the weapon: 1 is perfect 0 is broken
-        public int Quality { get; set; }
+        public float Quality { get; set; }
 
         public Weapon(string Name, int Weight, int Damage) : base(Name, Weight)
         {
@@ -68,8 +68,6 @@ namespace Hues_Adventure
 
     class Program
     {
-
-        #region INITIALIZE OBJECTS/LISTS
 
         // Possible Maps
 
@@ -135,10 +133,7 @@ namespace Hues_Adventure
 
         //A varible to see if the palyer wants to incratct with things
         static bool eventsEnabled = true;
-        #endregion
 
-        /* %%%%%%%%%%%%% PLAYER STATS %%%%%%%%%%%%% */
-        #region PLAYER STATS/IMPOTANT VARIBALES
         //Player Things-------------
         static bool playerAlive = false;
         static int playerX = 0;
@@ -148,10 +143,7 @@ namespace Hues_Adventure
         static List<Item> playerInventory = new List<Item>();
         static Weapon playerCurWeapon = null;
 
-        #endregion
 
-        /* %%%%%%%%%%%%% MAIN %%%%%%%%%%%%% */
-        #region MAIN
         static void Main(string[] args)
         {
 
@@ -167,6 +159,10 @@ namespace Hues_Adventure
                 if (GetInput() == "yes")
                 {
                     playerAlive = true;
+                }
+                else
+                {
+                    Environment.Exit(0);
                 }
 
                 Town.mapList = MapGen(Town.mapX, Town.mapY, Town.mapList, Town.isGenerated);
@@ -193,10 +189,6 @@ namespace Hues_Adventure
                 TW("-------------Game Over-------------", 0);
             }
         }
-        #endregion
-
-        /* %%%%%%%%%%%%% EXTRA FUNCTIONS %%%%%%%%%%%%% */
-        #region EXTRA FUNCTIONS
 
         static void TW(string text, int waitTime)
         {
@@ -232,7 +224,7 @@ namespace Hues_Adventure
 
                         Weapon weapon = (Weapon)item;
 
-                        weapon.Quality = random.Next(50, 100) / 100;
+                        weapon.Quality = random.Next(50, 100) / 100f;
 
                         playerInventory.Add(weapon);
                         
@@ -260,15 +252,11 @@ namespace Hues_Adventure
             playerY = 0;
             currentPlayerTile = "b";
             playerHP = 100;
-            playerInventory = new List<Item>();
+            playerInventory.Clear();
+            playerCurWeapon = null;
 
             Town.isGenerated = false;
         }
-
-        #endregion
-
-        /* %%%%%%%%%%%%% MAP STUFF %%%%%%%%%%%%% */
-        #region MAP STUFF 
 
         static void PrintMap(int mapX, int mapY, List<string> mapList)
         {
@@ -326,6 +314,7 @@ namespace Hues_Adventure
             //add a check to see if map has already been generated
             if (check == false)
             {
+                mapList.Clear();
 
                 for (int i = 0; i < mapY; i++)
                 {
@@ -366,11 +355,6 @@ namespace Hues_Adventure
         {
             currentPlayerTile = "b";
         }
-
-        #endregion
-
-        /* %%%%%%%%%%%%% PLAYER DOES STUFF %%%%%%%%%%%%% */
-        #region PLAYER DOES STUFF
 
         static List<string> PlayerAction(List<string> map, int mapX, int mapY)
         {
@@ -503,9 +487,7 @@ namespace Hues_Adventure
         {
             playerHP -= damage;
             Console.WriteLine("You take " + damage + " damage!");
-            System.Threading.Thread.Sleep(100);
         }
-
 
         private static void SetCurrentWeapon()
         {
@@ -528,16 +510,22 @@ namespace Hues_Adventure
                 while (monster.Health > 0 && playerHP > 0)
                 {
                     PlayerTakeDamage(monster.Damage);
+                    System.Threading.Thread.Sleep(300);
 
                     try
                     {
-                        monster.Health -= playerCurWeapon.Damage * playerCurWeapon.Quality;
+                        int playerDamage = (int)(playerCurWeapon.Damage * playerCurWeapon.Quality);
+                        monster.Health -= playerDamage;
+                        Console.WriteLine("You deal " + playerDamage + " to the " + monster.Name + " with your " + playerCurWeapon.Name);
+                    }
+                    catch (NullReferenceException)
+                    {
+                        int playerDamage = random.Next(1, 4);
+                        monster.Health -= playerDamage;
+                        Console.WriteLine("You deal " + playerDamage + " damage to the " + monster.Name + " with your fists");
                     }
 
-                    catch
-                    {
-                        monster.Health -= random.Next(1,4);
-                    }
+                    System.Threading.Thread.Sleep(300);
                 }
             }
 
@@ -615,11 +603,6 @@ namespace Hues_Adventure
             }
         }
 
-        #endregion
-
-        /* %%%%%%%%%%%%% CHECKS %%%%%%%%%%%%% */
-        #region CHECKS
-
         static string GetInput()
         {
             string input = Console.ReadLine();
@@ -639,6 +622,5 @@ namespace Hues_Adventure
             return false;
         }
 
-        #endregion
     }
 }
