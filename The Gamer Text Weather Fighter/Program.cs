@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Dynamic;
 
-namespace The_Gamer_Text_Weather_Fighter
+namespace Hues_Adventure
 {
 
     class Map
