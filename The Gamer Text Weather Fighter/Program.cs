@@ -55,12 +55,14 @@ namespace The_Gamer_Text_Weather_Fighter
         public int Health { get; set; }
         public string Name { get; set; }
         public int Damage { get; set; }
+        public int XP { get; set; }
 
-        public Monster(int health, string name ,int damage)
+        public Monster(string name, int health, int damage, int xp)
         {
             Health = health;
             Name = name;
             Damage = damage;
+            XP = xp;
         }
     }
 
@@ -69,8 +71,18 @@ namespace The_Gamer_Text_Weather_Fighter
 
         #region INITIALIZE OBJECTS/LISTS
 
-        // Creates a new map
+        // Possible Maps
+
         static Map Town = new Map();
+
+        //Possible Monsters that the player can fight
+        static readonly List<Monster> possibleMonsters = new List<Monster>()
+        {
+            new Monster("goblin", 10, 5, 10),
+            new Monster("orc", 30, 6, 30),
+            new Monster("ghost", 15, 10, 20),
+            new Monster("zombie", 20, 7, 15)
+        };
 
         //Possible Items in the game
         static readonly List<Item> possibleItems = new List<Item>() {
@@ -78,12 +90,24 @@ namespace The_Gamer_Text_Weather_Fighter
             new Weapon("dagger", 3, 5),
             new Weapon("axe", 14, 13),
             new Weapon("spear", 5, 10),
+            new Weapon("pickaxe", 10, 7),
             new Item("wood", 1),
             new Item("stone", 2),
             new Item("food", 1)
         };
 
-        //stores all the possible events
+        //Possible items that could be found in a chest
+        static readonly List<Item> possibleChestItems = new List<Item>()
+        {
+            new Weapon("sword", 10, 10),
+            new Weapon("dagger", 3, 5),
+            new Weapon("axe", 14, 13),
+            new Weapon("spear", 5, 10),
+            new Weapon("pickaxe", 10, 7),
+            new Item("food", 1)
+        };
+
+        //stores all the possible tiles used to generate maps
         static readonly List<char> randTiles = new List<char>() {
             'b', 'b', 'b', 'b', 'b', 'b', 'b', 'b', 'b', 'b', 'b', 'b', 'b', 'b', 'b', 'b', // 11/23
             't', 't', 't', 't', 't', 't', // 6/23
@@ -102,23 +126,27 @@ namespace The_Gamer_Text_Weather_Fighter
             "affirmative",
         };
 
+        // no answer list
         static readonly List<string> noAnswers = new List<string>()
         {
             "no",
             "n"
         };
 
+        //A varible to see if the palyer wants to incratct with things
+        static bool eventsEnabled = true;
         #endregion
 
         /* %%%%%%%%%%%%% PLAYER STATS %%%%%%%%%%%%% */
         #region PLAYER STATS/IMPOTANT VARIBALES
         //Player Things-------------
-        static bool playerAlive = true;
+        static bool playerAlive = false;
         static int playerX = 0;
         static int playerY = 0;
         static string currentPlayerTile = "b";
-        static int playerHP = 10;
+        static int playerHP = 100;
         static List<Item> playerInventory = new List<Item>();
+        static Weapon playerCurWeapon = null;
 
         #endregion
 
@@ -130,6 +158,8 @@ namespace The_Gamer_Text_Weather_Fighter
             //Run Game
             while (true)
             {
+
+                GameReset();
 
                 //ask to play a new game
                 TW("Would you like to start a new game?  yes/no", 0);
@@ -150,7 +180,7 @@ namespace The_Gamer_Text_Weather_Fighter
 
                     PlayerAction(Town.mapList, Town.mapX, Town.mapY);
 
-                    Events(Town.mapList);
+                    Events();
 
                     if (playerHP <= 0)
                     {
@@ -195,23 +225,44 @@ namespace The_Gamer_Text_Weather_Fighter
             {
                 if (item.Name == name)
                 {
+                    Console.WriteLine("You picked up this item: " + item.Name);
+
                     if (item.GetType() == typeof(Weapon))
                     {
 
                         Weapon weapon = (Weapon)item;
-                        weapon.Quality = random.Next(50, 100) / 100;
-                        playerInventory.Add(weapon);
 
+                        weapon.Quality = random.Next(50, 100) / 100;
+
+                        playerInventory.Add(weapon);
+                        
+                        Console.WriteLine("The quality of this item is: " + weapon.Quality);
+
+                        if (playerCurWeapon == null)
+                        {
+                            playerCurWeapon = weapon;
+                        }
                     }
 
                     else
                     {
+
                         playerInventory.Add(item);
                     }
-
                 }
             }
+        }
 
+        static void GameReset()
+        {
+            playerAlive = false;
+            playerX = 0;
+            playerY = 0;
+            currentPlayerTile = "b";
+            playerHP = 100;
+            playerInventory = new List<Item>();
+
+            Town.isGenerated = false;
         }
 
         #endregion
@@ -357,9 +408,23 @@ namespace The_Gamer_Text_Weather_Fighter
 
             map[playerY] = map[playerY].Substring(0, playerX) + "p" + map[playerY].Substring(playerX + 1);
 
+            
+            //display inventory
             if (thisInput == ConsoleKey.Tab)
             {
                 DisplayInventory(ConsoleKey.Tab);
+            }
+
+            //quit the game
+            if (thisInput == ConsoleKey.Escape)
+            {
+                Environment.Exit(0);
+            }
+
+            //select main weapon
+            if (thisInput == ConsoleKey.Q)
+            {
+
             }
 
             PrintMap(mapX, mapY, map);
@@ -406,9 +471,13 @@ namespace The_Gamer_Text_Weather_Fighter
         private static void DisplayInventory( ConsoleKey thisInput)
         {
             Console.WriteLine("Inventory:");
+            int i = 1;
             foreach (Item item in playerInventory)
             {
-                Console.WriteLine(item.Name);
+                
+                Console.WriteLine(i.ToString()+ ". " + item.Name);
+                Console.WriteLine("");
+                i++;
             } 
 
             while (!Console.KeyAvailable)
@@ -422,15 +491,6 @@ namespace The_Gamer_Text_Weather_Fighter
             }
         }
 
-        //private static void PlayerMove(List<string> map, ConsoleKey thisInput, ConsoleKey checkKey, int playerXY, int checkWall)
-        //{
-        //    if (thisInput == ConsoleKey.W && playerY > 0)
-        //    {
-        //        playerY -= 1;
-        //        currentPlayerTile = map[playerY].Substring(playerX, 1);
-        //    }
-        //}
-
         private static void ValidateMove(ConsoleKey thisInput, ConsoleKey checkKey, int playerXY, int checkWall)
         {
             if (thisInput == checkKey && playerXY == checkWall)
@@ -439,12 +499,54 @@ namespace The_Gamer_Text_Weather_Fighter
             }
         }
 
-        static void Events(List<string> map)
+        private static void PlayerTakeDamage(int damage)
         {
-            if (currentPlayerTile == "c")
+            playerHP -= damage;
+            Console.WriteLine("You take " + damage + " damage!");
+            System.Threading.Thread.Sleep(100);
+        }
+
+
+        private static void SetCurrentWeapon()
+        {
+            
+        }
+
+        static void Events()
+        {
+
+            //Fight monsters
+            if (random.Next(1,7) == 1)
+            {
+                Monster monster = possibleMonsters[random.Next(0, possibleMonsters.Count)];
+                monster.Damage += random.Next(-3, 4);
+                monster.Health += random.Next(-3, 4);
+                monster.XP += random.Next(-3, 4);
+
+                TW("You come accross a " + monster.Name, 400);
+
+                while (monster.Health > 0 && playerHP > 0)
+                {
+                    PlayerTakeDamage(monster.Damage);
+
+                    try
+                    {
+                        monster.Health -= playerCurWeapon.Damage * playerCurWeapon.Quality;
+                    }
+
+                    catch
+                    {
+                        monster.Health -= random.Next(1,4);
+                    }
+                }
+            }
+
+            //Step on a chest
+            if (currentPlayerTile == "c" && eventsEnabled == true)
             {
 
-                string loot = possibleItems[random.Next(0, possibleItems.Count)].Name;
+                string loot = possibleChestItems[random.Next(0, possibleChestItems.Count)].Name;
+
                 TW("You open the chest and find an " + loot + "... Would you like to pick it up?  yes/no", 0);
 
                 if (yesAnswers.Contains(GetInput()))
@@ -454,6 +556,7 @@ namespace The_Gamer_Text_Weather_Fighter
                 }
             }
 
+            //step on a tree
             if (currentPlayerTile == "t")
             {
                 if (CheckInvtryName("axe"))
@@ -476,6 +579,38 @@ namespace The_Gamer_Text_Weather_Fighter
                 else
                 {
                     TW("You have come across a tree... you might be able to cut this down some how", 400);
+                }
+            }
+
+            //step on a rock
+            if (currentPlayerTile == "r")
+            {
+                if (CheckInvtryName("pickaxe"))
+                {
+                    TW("You have come across a rock... Would you like to break it down?  yes/no", 0);
+
+                    if (yesAnswers.Contains(GetInput()))
+                    {
+                        CurrentTileErase();
+                        TW("You broke down the rock", 400);
+
+                        PlayerGetItem("stone");
+
+                        if (random.Next(1,3) == 1)
+                        {
+                            PlayerGetItem("iron");
+                        }
+                    }
+
+                    else
+                    {
+                        TW("You did not chop down the rock", 400);
+                    }
+                }
+
+                else
+                {
+                    TW("You have come across a rock... you might be able to break this down some how", 400);
                 }
             }
         }
