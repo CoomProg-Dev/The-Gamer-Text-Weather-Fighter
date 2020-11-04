@@ -1,2 +1,2 @@
-# The-Gamer-Text-Weather-Fighter
+# Hues-Adventure
 A text based adventure game
