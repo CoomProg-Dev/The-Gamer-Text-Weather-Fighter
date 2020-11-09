@@ -18,6 +18,7 @@ namespace Hues_Adventure
 
     class Item
     {
+        public int Quantity { get; set; }
         public string Name { get; set; }
         public int Weight { get; set; }
 
@@ -74,7 +75,7 @@ namespace Hues_Adventure
         static Map Town = new Map();
 
         //Possible Monsters that the player can fight
-        static readonly List<Monster> possibleMonsters = new List<Monster>()
+        static List<Monster> possibleMonsters = new List<Monster>()
         {
             new Monster("goblin", 10, 5, 10),
             new Monster("orc", 30, 6, 30),
@@ -139,8 +140,13 @@ namespace Hues_Adventure
         static int playerX = 0;
         static int playerY = 0;
         static string currentPlayerTile = "b";
+        static int maxPlayerHP = 100;
         static int playerHP = 100;
+        static int playerXP = 0;
+        static int playerStrength = 1;
         static List<Item> playerInventory = new List<Item>();
+        static int currentItemWeight = 0;
+        static int maxCarryWeight = 30;
         static Weapon playerCurWeapon = null;
 
 
@@ -171,12 +177,18 @@ namespace Hues_Adventure
 
                 PrintMap(Town.mapX, Town.mapY, Town.mapList);
 
+                PlayerGetItem("stone",3);
+                PlayerGetItem("food", 4);
+                PlayerGetItem("food", 2);
+
                 while (playerAlive)
                 {
 
                     PlayerAction(Town.mapList, Town.mapX, Town.mapY);
 
                     Events();
+
+                    UpdatePlayerLevel();
 
                     if (playerHP <= 0)
                     {
@@ -207,42 +219,70 @@ namespace Hues_Adventure
                 }
             }
             System.Threading.Thread.Sleep(waitTime);
-            Console.WriteLine(); 
+            Console.WriteLine();
 
         }
 
-        static void PlayerGetItem(string name)
+        static bool PlayerGetItem(string name, int quantity)
         {
             foreach (Item item in possibleItems)
             {
                 if (item.Name == name)
                 {
-                    Console.WriteLine("You picked up this item: " + item.Name);
-
-                    if (item.GetType() == typeof(Weapon))
+                    if (item.Weight*quantity + currentItemWeight <= maxCarryWeight)
                     {
+                        Console.WriteLine("You picked up this item: " + item.Name);
 
-                        Weapon weapon = (Weapon)item;
-
-                        weapon.Quality = random.Next(50, 100) / 100f;
-
-                        playerInventory.Add(weapon);
-                        
-                        Console.WriteLine("The quality of this item is: " + weapon.Quality);
-
-                        if (playerCurWeapon == null)
+                        if (item.GetType() == typeof(Weapon))
                         {
-                            playerCurWeapon = weapon;
+
+                            Weapon weapon = (Weapon)item;
+
+                            weapon.Quality = random.Next(50, 100) / 100f;
+
+                            playerInventory.Add(weapon);
+
+                            Console.WriteLine("The quality of this item is: " + weapon.Quality);
+
+                            if (playerCurWeapon == null)
+                            {
+                                playerCurWeapon = weapon;
+                            }
                         }
+
+                        else
+                        {
+                            bool itemFound = false;
+                            int i = 0;
+
+                            foreach (Item item1 in playerInventory)
+                            {
+                                if (item1.Name == item.Name)
+                                {
+                                    playerInventory[i].Quantity += quantity;
+                                    itemFound = true;
+                                }
+                                i++;
+                            }
+
+                            if (!itemFound)
+                            {
+                                item.Quantity += quantity;
+                                playerInventory.Add(item);
+                            }  
+                        }
+
+                        currentItemWeight += item.Weight*quantity;
+                        return true;
                     }
 
                     else
                     {
-
-                        playerInventory.Add(item);
+                        TW("You cannot pick up this item... It is too heavy", 300);
                     }
                 }
             }
+            return false;
         }
 
         static void GameReset()
@@ -252,10 +292,22 @@ namespace Hues_Adventure
             playerY = 0;
             currentPlayerTile = "b";
             playerHP = 100;
+            maxPlayerHP = 100;
+            playerStrength = 1;
             playerInventory.Clear();
+            currentItemWeight = 0;
+            maxCarryWeight = 30;
             playerCurWeapon = null;
 
             Town.isGenerated = false;
+
+            possibleMonsters = new List<Monster>()
+            {
+                new Monster("goblin", 10, 5, 10),
+                new Monster("orc", 30, 6, 30),
+                new Monster("ghost", 15, 10, 20),
+                new Monster("zombie", 20, 7, 15)
+            };
         }
 
         static void PrintMap(int mapX, int mapY, List<string> mapList)
@@ -363,7 +415,7 @@ namespace Hues_Adventure
 
             while (Console.KeyAvailable == false)
             {
-                
+
             }
 
             Console.Clear();
@@ -392,11 +444,13 @@ namespace Hues_Adventure
 
             map[playerY] = map[playerY].Substring(0, playerX) + "p" + map[playerY].Substring(playerX + 1);
 
-            
+            PrintMap(mapX, mapY, map);
+
             //display inventory
             if (thisInput == ConsoleKey.Tab)
             {
                 DisplayInventory(ConsoleKey.Tab);
+                PlayerAction(map,mapX,mapY);
             }
 
             //quit the game
@@ -408,10 +462,19 @@ namespace Hues_Adventure
             //select main weapon
             if (thisInput == ConsoleKey.Q)
             {
+                eventsEnabled = !eventsEnabled;
+                if (eventsEnabled)
+                {
+                    TW("Events are enabled", 300);
+                }
 
+                if (!eventsEnabled)
+                {
+                    TW("Events are disabled", 300);
+                }
+
+                PlayerAction(map, mapX, mapY);
             }
-
-            PrintMap(mapX, mapY, map);
 
             return map;
         }
@@ -452,17 +515,26 @@ namespace Hues_Adventure
             }
         }
 
-        private static void DisplayInventory( ConsoleKey thisInput)
+        private static void DisplayInventory(ConsoleKey thisInput)
         {
             Console.WriteLine("Inventory:");
             int i = 1;
             foreach (Item item in playerInventory)
             {
-                
-                Console.WriteLine(i.ToString()+ ". " + item.Name);
-                Console.WriteLine("");
+                if(item.Quantity > 1)
+                {
+                    Console.WriteLine(i.ToString() + ". " + item.Name + " " + item.Quantity);
+                    Console.WriteLine("");
+                }
+
+                else
+                {
+                    Console.WriteLine(i.ToString() + ". " + item.Name);
+                    Console.WriteLine("");
+                }
+
                 i++;
-            } 
+            }
 
             while (!Console.KeyAvailable)
             {
@@ -489,16 +561,22 @@ namespace Hues_Adventure
             Console.WriteLine("You take " + damage + " damage!");
         }
 
+        private static void GainXP( int XP)
+        {
+            playerXP += XP;
+            TW("You gained " + XP + " experience points!", 300);
+        }
+
         private static void SetCurrentWeapon()
         {
-            
+
         }
 
         static void Events()
         {
 
             //Fight monsters
-            if (random.Next(1,7) == 1)
+            if (random.Next(1, 9) == 1)
             {
                 Monster monster = possibleMonsters[random.Next(0, possibleMonsters.Count)];
                 monster.Damage += random.Next(-3, 4);
@@ -514,18 +592,23 @@ namespace Hues_Adventure
 
                     try
                     {
-                        int playerDamage = (int)(playerCurWeapon.Damage * playerCurWeapon.Quality);
+                        int playerDamage = (int)(playerCurWeapon.Damage * playerCurWeapon.Quality) + random.Next(1, 4) + playerStrength;
                         monster.Health -= playerDamage;
                         Console.WriteLine("You deal " + playerDamage + " to the " + monster.Name + " with your " + playerCurWeapon.Name);
                     }
                     catch (NullReferenceException)
                     {
-                        int playerDamage = random.Next(1, 4);
+                        int playerDamage = random.Next(1, 4) + playerStrength;
                         monster.Health -= playerDamage;
                         Console.WriteLine("You deal " + playerDamage + " damage to the " + monster.Name + " with your fists");
                     }
 
                     System.Threading.Thread.Sleep(300);
+                }
+
+                if (monster.Health <= 0)
+                {
+                    GainXP(monster.XP);
                 }
             }
 
@@ -539,13 +622,15 @@ namespace Hues_Adventure
 
                 if (yesAnswers.Contains(GetInput()))
                 {
-                    currentPlayerTile = "C";
-                    PlayerGetItem(loot);
+                    if (PlayerGetItem(loot,1))
+                    {
+                        currentPlayerTile = "C";
+                    }
                 }
             }
 
             //step on a tree
-            if (currentPlayerTile == "t")
+            if (currentPlayerTile == "t" && eventsEnabled == true)
             {
                 if (CheckInvtryName("axe"))
                 {
@@ -555,7 +640,7 @@ namespace Hues_Adventure
                     {
                         CurrentTileErase();
                         TW("You chopped down the tree", 400);
-                        PlayerGetItem("wood");
+                        PlayerGetItem("wood",1);
                     }
 
                     else
@@ -571,7 +656,7 @@ namespace Hues_Adventure
             }
 
             //step on a rock
-            if (currentPlayerTile == "r")
+            if (currentPlayerTile == "r" && eventsEnabled == true)
             {
                 if (CheckInvtryName("pickaxe"))
                 {
@@ -582,11 +667,11 @@ namespace Hues_Adventure
                         CurrentTileErase();
                         TW("You broke down the rock", 400);
 
-                        PlayerGetItem("stone");
+                        PlayerGetItem("stone",1);
 
-                        if (random.Next(1,3) == 1)
+                        if (random.Next(1, 3) == 1)
                         {
-                            PlayerGetItem("iron");
+                            PlayerGetItem("iron",1);
                         }
                     }
 
@@ -620,6 +705,52 @@ namespace Hues_Adventure
             }
 
             return false;
+        }
+
+        static void UpdatePlayerLevel()
+        {
+            if (playerXP >= 30)
+            {
+                TW("You leveled up!", 300);
+                maxCarryWeight = (int)(maxCarryWeight * 1.2);
+                maxPlayerHP = (int)(maxPlayerHP * 1.2);
+                playerStrength += 1;
+                playerXP -= 30;
+
+                DisplayPlayerStats();
+            }
+        }
+
+        static void DisplayPlayerStats()
+        {
+            Console.Clear();
+
+            Console.WriteLine("Health: " + playerHP);
+            Console.WriteLine("Max Health: " + maxPlayerHP);
+            Console.WriteLine("Strength: " + playerStrength);
+            Console.WriteLine("Experience Points: " + playerXP);
+            Console.WriteLine("Current Item Weight: " + currentItemWeight);
+            Console.WriteLine("Maximum Carry Weight: " + maxCarryWeight);
+            Console.WriteLine("Current Weapon: " + playerCurWeapon.Name);
+
+            WaitForInput();
+        }
+
+        static void WaitForInput()
+        {
+            Console.WriteLine("Press any key to exit");
+            while (Console.KeyAvailable == false)
+            {
+
+            }
+
+            Console.Clear();
+            PrintMap(Town.mapX, Town.mapY, Town.mapList);
+
+            if (Console.KeyAvailable == true)
+            {
+                Console.ReadKey(true);
+            }
         }
 
     }
