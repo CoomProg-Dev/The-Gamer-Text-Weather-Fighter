@@ -92,7 +92,7 @@ namespace Hues_Adventure
             new Weapon("pickaxe", 10, 7),
             new Item("wood", 1),
             new Item("stone", 2),
-            new Item("food", 1)
+            new Item("healing potion", 2)
         };
 
         //Possible items that could be found in a chest
@@ -103,7 +103,7 @@ namespace Hues_Adventure
             new Weapon("axe", 14, 13),
             new Weapon("spear", 5, 10),
             new Weapon("pickaxe", 10, 7),
-            new Item("food", 1)
+            new Item("healing potion", 2)
         };
 
         //stores all the possible tiles used to generate maps
@@ -150,6 +150,7 @@ namespace Hues_Adventure
         static Weapon playerCurWeapon = null;
 
 
+        
         static void Main(string[] args)
         {
 
@@ -177,10 +178,6 @@ namespace Hues_Adventure
 
                 PrintMap(Town.mapX, Town.mapY, Town.mapList);
 
-                PlayerGetItem("stone",3);
-                PlayerGetItem("food", 4);
-                PlayerGetItem("food", 2);
-
                 while (playerAlive)
                 {
 
@@ -201,6 +198,8 @@ namespace Hues_Adventure
                 TW("-------------Game Over-------------", 0);
             }
         }
+
+
 
         static void TW(string text, int waitTime)
         {
@@ -476,6 +475,12 @@ namespace Hues_Adventure
                 PlayerAction(map, mapX, mapY);
             }
 
+            if (thisInput == ConsoleKey.E)
+            {
+                DisplayPlayerStats();
+                PlayerAction(map, mapX, mapY);
+            }
+
             return map;
         }
 
@@ -517,8 +522,12 @@ namespace Hues_Adventure
 
         private static void DisplayInventory(ConsoleKey thisInput)
         {
+            Console.Clear();
+
             Console.WriteLine("Inventory:");
+
             int i = 1;
+
             foreach (Item item in playerInventory)
             {
                 if(item.Quantity > 1)
@@ -536,6 +545,8 @@ namespace Hues_Adventure
                 i++;
             }
 
+            ConsoleKey consoleKey = new ConsoleKey();
+
             while (!Console.KeyAvailable)
             {
 
@@ -543,8 +554,29 @@ namespace Hues_Adventure
 
             if (Console.KeyAvailable)
             {
-                Console.ReadKey(true);
+                consoleKey = Console.ReadKey(true).Key;
             }
+
+            WaitForInput();
+        }
+
+        private static void DisplayPlayerStats()
+        {
+            Console.Clear();
+
+            Console.WriteLine("Health: " + playerHP);
+            Console.WriteLine("Max Health: " + maxPlayerHP);
+            Console.WriteLine("Strength: " + playerStrength);
+            Console.WriteLine("Experience Points: " + playerXP);
+            Console.WriteLine("Current Item Weight: " + currentItemWeight);
+            Console.WriteLine("Maximum Carry Weight: " + maxCarryWeight);
+            try
+            {
+                Console.WriteLine("Current Weapon: " + playerCurWeapon.Name);
+            }
+            catch { }
+
+            WaitForInput();
         }
 
         private static void ValidateMove(ConsoleKey thisInput, ConsoleKey checkKey, int playerXY, int checkWall)
@@ -578,7 +610,8 @@ namespace Hues_Adventure
             //Fight monsters
             if (random.Next(1, 9) == 1)
             {
-                Monster monster = possibleMonsters[random.Next(0, possibleMonsters.Count)];
+                int randMonster = random.Next(0, possibleMonsters.Count);
+                Monster monster = new Monster(possibleMonsters[randMonster].Name, possibleMonsters[randMonster].Health, possibleMonsters[randMonster].Damage, possibleMonsters[randMonster].XP);
                 monster.Damage += random.Next(-3, 4);
                 monster.Health += random.Next(-3, 4);
                 monster.XP += random.Next(-3, 4);
@@ -721,20 +754,6 @@ namespace Hues_Adventure
             }
         }
 
-        static void DisplayPlayerStats()
-        {
-            Console.Clear();
-
-            Console.WriteLine("Health: " + playerHP);
-            Console.WriteLine("Max Health: " + maxPlayerHP);
-            Console.WriteLine("Strength: " + playerStrength);
-            Console.WriteLine("Experience Points: " + playerXP);
-            Console.WriteLine("Current Item Weight: " + currentItemWeight);
-            Console.WriteLine("Maximum Carry Weight: " + maxCarryWeight);
-            Console.WriteLine("Current Weapon: " + playerCurWeapon.Name);
-
-            WaitForInput();
-        }
 
         static void WaitForInput()
         {
