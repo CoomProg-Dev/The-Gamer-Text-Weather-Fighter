@@ -526,20 +526,39 @@ namespace Hues_Adventure
 
             Console.WriteLine("Inventory:");
 
+            int cursorPos = 1;
             int i = 1;
 
             foreach (Item item in playerInventory)
             {
-                if(item.Quantity > 1)
+                if (i == cursorPos)
                 {
-                    Console.WriteLine(i.ToString() + ". " + item.Name + " " + item.Quantity);
-                    Console.WriteLine("");
+                    if (item.Quantity > 1)
+                    {
+                        Console.WriteLine(">> " + item.Name + " " + item.Quantity);
+                        Console.WriteLine("");
+                    }
+
+                    else
+                    {
+                        Console.WriteLine(">> " + item.Name);
+                        Console.WriteLine("");
+                    }
                 }
 
                 else
                 {
-                    Console.WriteLine(i.ToString() + ". " + item.Name);
-                    Console.WriteLine("");
+                    if (item.Quantity > 1)
+                    {
+                        Console.WriteLine(i.ToString() + ". " + item.Name + " " + item.Quantity);
+                        Console.WriteLine("");
+                    }
+
+                    else
+                    {
+                        Console.WriteLine(i.ToString() + ". " + item.Name);
+                        Console.WriteLine("");
+                    }
                 }
 
                 i++;
@@ -555,6 +574,37 @@ namespace Hues_Adventure
             if (Console.KeyAvailable)
             {
                 consoleKey = Console.ReadKey(true).Key;
+            }
+
+            if (consoleKey == ConsoleKey.W || consoleKey == ConsoleKey.UpArrow)
+            {
+                if (cursorPos == 0)
+                {
+                    cursorPos = playerInventory.Count;
+                }
+
+                else
+                {
+                    cursorPos -= 1;
+                }
+            }
+
+            if (consoleKey == ConsoleKey.S || consoleKey == ConsoleKey.DownArrow)
+            {
+                if (cursorPos == playerInventory.Count)
+                {
+                    cursorPos = 0;
+                }
+
+                else
+                {
+                    cursorPos += 1;
+                }
+            }
+
+            if (consoleKey == ConsoleKey.Enter)
+            {
+                //do a thing
             }
 
             WaitForInput();
