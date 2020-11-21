@@ -12,8 +12,4 @@
     <None Remove="obj\**" />
   </ItemGroup>
 
-  <ItemGroup>
-    <Compile Include="C:\Users\User\source\repos\Hues-Adventure\Hues Adventure\Program.cs" Link="Program.cs" />
-  </ItemGroup>
-
 </Project>
