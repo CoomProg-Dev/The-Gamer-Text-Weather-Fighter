@@ -5,16 +5,58 @@ using System.Dynamic;
 namespace Hues_Adventure
 {
 
-    class Map
+    class GameObject
     {
-        public int mapX = 30;
-        public int mapY = 30;
-        public bool isGenerated = false;
+        public string Name { get; set; }
+        public string Print { get; set; }
+        public ConsoleColor Colour { get; set; }
+        public float Height { get; set; }
+        public string Type { get; set; }
+        public VectorTwoInt Position { get; set; }
+        
 
-        //stores the map as a list of strings
-        public List<string> mapList = new List<string>();
+        public GameObject(string name, string print, ConsoleColor colour,float height, string type)
+        {
+            Name = name;
+            Print = print;
+            Colour = colour;
+            Height = height;
+            Type = type;
+        }
+
+        public GameObject()
+        {
+
+        }
+    }
+    
+
+    class Tile : List<GameObject>
+    {
 
     }
+
+    class Row : List<Tile>
+    {
+
+    }
+
+    class Map : List<Row>
+    {
+        public VectorTwoInt Dimension = new VectorTwoInt(0,0);
+        public bool isGenerated = false;
+
+        public Map(int x, int y)
+        {
+            Dimension.X = x;
+            Dimension.Y = y;
+        }
+
+        //stores the map as a list of strings
+
+        //public List<string> mapList = new List<string>();
+    }
+
 
     class Item
     {
@@ -79,12 +121,37 @@ namespace Hues_Adventure
         }
     }
 
+    class VectorTwoInt
+    {
+
+        public int X { get; set; }
+        public int Y { get; set; }
+
+        public VectorTwoInt(int x,int y)
+        {
+            X = x;
+            Y = y;
+        }
+
+        public override bool Equals(object obj)
+        {
+            return obj is VectorTwoInt @int &&
+                   X == @int.X &&
+                   Y == @int.Y;
+        }
+
+        public override int GetHashCode()
+        {
+            return HashCode.Combine(X, Y);
+        }
+    }
+
     class Program
     {
 
         // Possible Maps
 
-        static Map Town = new Map();
+        static Map TheWild = new Map(30, 30);
 
         //Possible Monsters that the player can fight
         static List<Monster> possibleMonsters = new List<Monster>()
@@ -118,12 +185,23 @@ namespace Hues_Adventure
             new Consumable("healing potion", 2 , "health", 25)
         };
 
-        //stores all the possible tiles used to generate maps
-        static readonly List<char> randTiles = new List<char>() {
-            'b', 'b', 'b', 'b', 'b', 'b', 'b', 'b', 'b', 'b', 'b', 'b', 'b', 'b', 'b', 'b', // 11/23
-            't', 't', 't', 't', 't', 't', // 6/23
-            'r', 'r', 'r', 'r',  // 4/23
-            'c' // 1/23
+        //Stores all the possible game objects
+        static List<GameObject> gameObjects = new List<GameObject>()
+        {
+            new GameObject("tree", " Y ", ConsoleColor.Green, 4, "feature"),
+            new GameObject("boulder", " o ", ConsoleColor.Gray, 4, "feature"),
+            new GameObject("chest", "[#]", ConsoleColor.DarkYellow, 4, "feature"),
+            new GameObject("open chest", "[ ]", ConsoleColor.DarkYellow, 4, "feature"),
+            new GameObject("player", " + ", ConsoleColor.Red, 6, "creature"),
+            new GameObject("monster", " ! ", ConsoleColor.DarkMagenta, 5, "creature"),
+            new GameObject("item", " # ", ConsoleColor.Blue, 3, "item"),
+            new GameObject("blank", "   ", ConsoleColor.Black, 0, "placeholder")
+        };
+
+        //stores all the possible tiles and ratios of tiles used to generate maps
+        static readonly List<string> randGameObjects = new List<string>()
+        {
+
         };
 
         //Random number
@@ -144,14 +222,20 @@ namespace Hues_Adventure
             "n"
         };
 
+        //Answer List for selection sim
+        static readonly List<string> answers = new List<string>()
+        {
+            "Yes",
+            "No"
+        };
+
         //A varible to see if the palyer wants to incratct with things
         static bool eventsEnabled = true;
 
         //Player Things-------------
         static bool playerAlive = false;
-        static int playerX = 0;
-        static int playerY = 0;
-        static string currentPlayerTile = "b";
+        static VectorTwoInt playerPos = new VectorTwoInt(0,0);
+        static List<GameObject> currentPlayerTile = new List<GameObject>();
         static int maxPlayerHP = 100;
         static int playerHP = 100;
         static int playerXP = 0;
@@ -170,34 +254,33 @@ namespace Hues_Adventure
             while (true)
             {
 
-                GameReset();
+                GameReset(ref TheWild);
 
                 //ask to play a new game
-                TW("Would you like to start a new game?  yes/no", 0);
 
-                if (GetInput() == "yes")
+                if (PrintSelectionLoop("Would you like to start a new game?", answers) == 1)
                 {
                     playerAlive = true;
                 }
+
                 else
                 {
                     Environment.Exit(0);
                 }
 
-                Town.mapList = MapGen(Town.mapX, Town.mapY, Town.mapList, Town.isGenerated);
+                MapInitialize(ref TheWild);
 
-                Town.isGenerated = true;
-
-                PrintMap(Town.mapX, Town.mapY, Town.mapList);
-
+                PrintMap(TheWild);
+                break;
+                /*
                 while (playerAlive)
                 {
 
-                    PlayerAction(Town.mapList, Town.mapX, Town.mapY);
+                    PlayerAction(ref TheWild);
 
-                    Events();
+                    Events(ref TheWild);
 
-                    UpdatePlayerLevel();
+                    UpdatePlayerLevel(TheWild);
 
                     if (playerHP <= 0)
                     {
@@ -207,7 +290,7 @@ namespace Hues_Adventure
                 }
 
                 Console.Clear();
-                TW("-------------Game Over-------------", 0);
+                TW("-------------Game Over-------------", 0);*/
             }
         }
 
@@ -295,12 +378,11 @@ namespace Hues_Adventure
             return false;
         }
 
-        static void GameReset()
+        static void GameReset(ref Map map)
         {
             playerAlive = false;
-            playerX = 0;
-            playerY = 0;
-            currentPlayerTile = "b";
+            playerPos.X = 0;
+            playerPos.Y = 0;
             playerHP = 100;
             maxPlayerHP = 100;
             playerStrength = 1;
@@ -309,116 +391,155 @@ namespace Hues_Adventure
             maxCarryWeight = 30;
             playerCurWeapon = null;
 
-            Town.isGenerated = false;
-
-            possibleMonsters = new List<Monster>()
-            {
-                new Monster("goblin", 10, 5, 10),
-                new Monster("orc", 30, 6, 30),
-                new Monster("ghost", 15, 10, 20),
-                new Monster("zombie", 20, 7, 15)
-            };
+            map.isGenerated = false;
         }
 
-        static void PrintMap(int mapX, int mapY, List<string> mapList)
+        static void PrintMap(Map map)
         {
-
-
-            for (int i = 0; i < (mapX * mapY); i++)
+            foreach(Row row in map)
             {
-
-                if (mapList[i / mapX].Substring(i - (i / mapX * mapX), 1) == "p")
+                foreach(Tile tile in row)
                 {
-                    Console.ForegroundColor = ConsoleColor.Red;
-                    Console.Write(" + ");
+                    GameObject top = GetGameObject("blank");
+
+                    foreach(GameObject gameObject in tile)
+                    {
+                        if (gameObject.Height > top.Height)
+                        {
+                            top = gameObject;
+                        }
+                    }
+
+                    Console.ForegroundColor = top.Colour;
+                    Console.Write(top.Print);
                 }
 
-                if (mapList[i / mapX].Substring(i - (i / mapX * mapX), 1) == "b")
-                {
-                    Console.Write("   ");
-                }
-
-                if (mapList[i / mapX].Substring(i - (i / mapX * mapX), 1) == "t")
-                {
-                    Console.ForegroundColor = ConsoleColor.Green;
-                    Console.Write(" Y ");
-                }
-
-                if (mapList[i / mapX].Substring(i - (i / mapX * mapX), 1) == "r")
-                {
-                    Console.ForegroundColor = ConsoleColor.Gray;
-                    Console.Write(" o ");
-                }
-
-                if (mapList[i / mapX].Substring(i - (i / mapX * mapX), 1) == "c")
-                {
-                    Console.ForegroundColor = ConsoleColor.DarkYellow;
-                    Console.Write("[#]");
-                }
-
-                if (mapList[i / mapX].Substring(i - (i / mapX * mapX), 1) == "C")
-                {
-                    Console.ForegroundColor = ConsoleColor.DarkYellow;
-                    Console.Write("[ ]");
-                }
-
-                if ((i + 1) % mapX == 0)
-                {
-                    Console.WriteLine();
-                }
-
+                Console.WriteLine();      
             }
+
             Console.ForegroundColor = ConsoleColor.White;
         }
 
-        static List<string> MapGen(int mapX, int mapY, List<string> mapList, bool check)
+        static void MapInitialize(ref Map map)
         {
-            //add a check to see if map has already been generated
-            if (check == false)
+            map.Clear();
+
+            for (int m = 0; m < map.Dimension.Y; m++)
             {
-                mapList.Clear();
+                Row row = new Row();
 
-                for (int i = 0; i < mapY; i++)
+                for (int c = 0; c < map.Dimension.X; c++)
                 {
-
-                    mapList.Add("");
-
-                    for (int n = 0; n < mapX; n++)
-                    {
-
-                        int randTile = random.Next(randTiles.Count);
-
-                        char currentTile = randTiles[randTile];
-
-                        mapList[i] = mapList[i] + currentTile.ToString();
-
-                    }
+                    row.Add(new Tile());
                 }
 
-                //spawn the player
-                int spawnY = random.Next(mapY);
-                int spawnX = random.Next(mapX);
-                playerX = spawnX;
-                playerY = spawnY;
-
-                //mapList[playerY] = mapList[playerY].Substring(0, playerX) + "p" + mapList[playerY].Substring(playerX + 1);
-                EditMapList(mapList, playerX, playerY, "p");
+                map.Add(row);
             }
 
-            return mapList;
+            Generate(GetGameObject("tree"), ref map, 5);
+            Generate(GetGameObject("boulder"), ref map, 3);
+            Generate(GetGameObject("chest"), ref map, 0.5f);
+
+
+            //spawn the player
+            playerPos = new VectorTwoInt(random.Next(map.Dimension.X), random.Next(map.Dimension.Y) );
+            
+
+            //mapList[playerY] = mapList[playerY].Substring(0, playerX) + "p" + mapList[playerY].Substring(playerX + 1);
+            PlaceGameObject(ref map, GetGameObject("player"),playerPos);
+            
         }
 
-        static void EditMapList(List<string> mapList, int x, int y, string aString)
+        static void Generate(GameObject gameObject, ref Map map, float precentOfTiles)
         {
-            mapList[y] = mapList[y].Substring(0, x) + aString + mapList[y].Substring(x + 1);
+            for (int i = 0; i < map.Dimension.X * map.Dimension.Y / 100 * precentOfTiles; i++)
+            {
+                VectorTwoInt randomPos = RandPos(map);
+
+                if (!IsObjectAtPos(gameObject, randomPos, map))
+                {
+                    PlaceGameObject(ref map, gameObject, randomPos);
+                }
+
+                else
+                {
+                    i--;
+                }
+            }
         }
 
-        static void CurrentTileErase()
+        static List<GameObject> ReturnObjsAtPos(VectorTwoInt pos, Map map)
         {
-            currentPlayerTile = "b";
+
+            List<GameObject> list = new List<GameObject>();
+
+            list.AddRange(map[pos.Y][pos.X]);
+
+            return list;
         }
 
-        static List<string> PlayerAction(List<string> map, int mapX, int mapY)
+        static bool IsObjectAtPos(GameObject gameObject, VectorTwoInt pos ,Map map)
+        {
+            if (ReturnObjsAtPos(pos,map).Contains(gameObject))
+            {
+                return true;
+            }
+
+            return false;
+        }
+
+        static bool IsObjectAtPos(VectorTwoInt pos, Map map)
+        {
+            if (ReturnObjsAtPos(pos, map) == null)
+            {
+                return false;
+            }
+
+            return true;
+        }
+
+        static List<GameObject> MapObjects (Map map)
+        {
+            List<GameObject> list = new List<GameObject> ();
+            foreach(Row row in map)
+            {
+                foreach(Tile tile in row)
+                {
+                    list.AddRange(tile);
+                }
+            }
+
+            return list;
+        }
+
+        static VectorTwoInt RandPos (Map map)
+        {
+            
+            return new VectorTwoInt(random.Next(map.Dimension.X), random.Next(map.Dimension.Y));
+        }
+
+        static void PlaceGameObject(ref Map map, GameObject gameObject, VectorTwoInt pos)
+        {
+            map[pos.Y][pos.X].Add(gameObject);
+        }
+
+        static void MapClear(ref Map map)
+        {
+            foreach (Row c in map)
+            {
+                foreach (Tile t in c)
+                {
+                    t.Clear();
+                }
+            }
+        }
+
+        static void GameObjectErase(ref Map map, GameObject gameObject)
+        {
+            map[playerPos.Y][playerPos.X].Remove(gameObject);
+        }
+
+        static void PlayerAction(ref Map map)
         {
 
             ConsoleKey thisInput = new ConsoleKey();
@@ -433,34 +554,34 @@ namespace Hues_Adventure
             if (Console.KeyAvailable == true)
             {
                 thisInput = Console.ReadKey(true).Key;
-                map[playerY] = map[playerY].Substring(0, playerX) + currentPlayerTile + map[playerY].Substring(playerX + 1);
+                map[playerPos.Y][playerPos.X].Remove(GetGameObject("player"));
             }
 
             //Move UP
-            ValidateMove(thisInput, ConsoleKey.W, playerY, 0);
+            ValidateMove(thisInput, ConsoleKey.W, playerPos.Y, 0);
             PlayerMoveUp(map, thisInput);
 
             //Move Down
-            ValidateMove(thisInput, ConsoleKey.S, playerY, mapY - 1);
-            PlayerMoveDown(map, mapY, thisInput);
+            ValidateMove(thisInput, ConsoleKey.S, playerPos.Y, map.Dimension.Y - 1);
+            PlayerMoveDown(map, thisInput);
 
             //Move Left
-            ValidateMove(thisInput, ConsoleKey.A, playerX, 0);
+            ValidateMove(thisInput, ConsoleKey.A, playerPos.X, 0);
             PlayerMoveLeft(map, thisInput);
 
             //Move Right
-            ValidateMove(thisInput, ConsoleKey.D, playerX, mapX - 1);
-            PlayerMoveRight(map, mapX, thisInput);
+            ValidateMove(thisInput, ConsoleKey.D, playerPos.X, map.Dimension.X - 1);
+            PlayerMoveRight(map, thisInput);
 
-            map[playerY] = map[playerY].Substring(0, playerX) + "p" + map[playerY].Substring(playerX + 1);
+            PlaceGameObject(ref map, GetGameObject("player"), playerPos);
 
-            PrintMap(mapX, mapY, map);
+            PrintMap(map);
 
             //display inventory
             if (thisInput == ConsoleKey.Tab)
             {
-                DisplayInventory();
-                PlayerAction(map, mapX, mapY);
+                DisplayInventory(map);
+                PlayerAction(ref map);
             }
 
             //quit the game
@@ -469,7 +590,7 @@ namespace Hues_Adventure
                 Environment.Exit(0);
             }
 
-            //select main weapon
+            //Disable Interactions With Game objects
             if (thisInput == ConsoleKey.Q)
             {
                 eventsEnabled = !eventsEnabled;
@@ -483,55 +604,50 @@ namespace Hues_Adventure
                     TW("Events are disabled", 300);
                 }
 
-                PlayerAction(map, mapX, mapY);
+                PlayerAction(ref map);
             }
 
             if (thisInput == ConsoleKey.E)
             {
-                DisplayPlayerStats();
-                PlayerAction(map, mapX, mapY);
+                DisplayPlayerStats(map);
+                PlayerAction(ref map);
             }
-
-            return map;
         }
 
-        private static void PlayerMoveRight(List<string> map, int mapX, ConsoleKey thisInput)
+        static void PlayerMoveRight(Map map, ConsoleKey thisInput)
         {
-            if (thisInput == ConsoleKey.D && playerX < mapX - 1)
+            if (thisInput == ConsoleKey.D && playerPos.X < map.Dimension.X - 1)
             {
-                playerX += 1;
-                currentPlayerTile = map[playerY].Substring(playerX, 1);
+                playerPos.X += 1;
             }
         }
 
-        private static void PlayerMoveLeft(List<string> map, ConsoleKey thisInput)
+        static void PlayerMoveLeft(Map map, ConsoleKey thisInput)
         {
-            if (thisInput == ConsoleKey.A && playerX > 0)
+            if (thisInput == ConsoleKey.A && playerPos.X > 0)
             {
-                playerX -= 1;
-                currentPlayerTile = map[playerY].Substring(playerX, 1);
+                playerPos.X -= 1;
+
             }
         }
 
-        private static void PlayerMoveDown(List<string> map, int mapY, ConsoleKey thisInput)
+        static void PlayerMoveDown(Map map, ConsoleKey thisInput)
         {
-            if (thisInput == ConsoleKey.S && playerY < mapY - 1)
+            if (thisInput == ConsoleKey.S && playerPos.Y < map.Dimension.Y - 1)
             {
-                playerY += 1;
-                currentPlayerTile = map[playerY].Substring(playerX, 1);
+                playerPos.Y += 1;
             }
         }
 
-        private static void PlayerMoveUp(List<string> map, ConsoleKey thisInput)
+        static void PlayerMoveUp(Map map, ConsoleKey thisInput)
         {
-            if (thisInput == ConsoleKey.W && playerY > 0)
+            if (thisInput == ConsoleKey.W && playerPos.Y > 0)
             {
-                playerY -= 1;
-                currentPlayerTile = map[playerY].Substring(playerX, 1);
+                playerPos.Y -= 1;
             }
         }
 
-        private static void DisplayInventory()
+        static void DisplayInventory(Map map)
         {
             int cursorPos = 1;
 
@@ -580,10 +696,10 @@ namespace Hues_Adventure
 
                 if (playerInventory.Count != 0)
                 {
-                    if (selectionSim(ref cursorPos, playerInventory.Count))
+                    if (ChooseSelection(ref cursorPos, playerInventory.Count))
                     {
                         DisplayItem(playerInventory[cursorPos - 1], cursorPos - 1);
-                        WaitForInput();
+                        WaitForInput(map);
                         break;
                     }
                 }
@@ -595,7 +711,7 @@ namespace Hues_Adventure
             }
         }
 
-        private static void DisplayItem(Item item, int index)
+        static void DisplayItem(Item item, int index)
         {
 
 
@@ -631,7 +747,7 @@ namespace Hues_Adventure
                         i++;
                     }
 
-                    if (selectionSim(ref cursorPos, options.Count))
+                    if (ChooseSelection(ref cursorPos, options.Count))
                     {
                         if (options[cursorPos - 1] == options[0])
                         {
@@ -706,7 +822,7 @@ namespace Hues_Adventure
                         i++;
                     }
 
-                    if (selectionSim(ref cursorPos, options.Count))
+                    if (ChooseSelection(ref cursorPos, options.Count))
                     {
                         if (options[cursorPos - 1] == options[0])
                         {
@@ -781,7 +897,7 @@ namespace Hues_Adventure
                         i++;
                     }
 
-                    if (selectionSim(ref cursorPos, options.Count))
+                    if (ChooseSelection(ref cursorPos, options.Count))
                     {
                         if (options[cursorPos - 1] == options[0])
                         {
@@ -811,7 +927,7 @@ namespace Hues_Adventure
             }
         }
 
-        private static void PlayerStatChange(string stat, int modifier)
+        static void PlayerStatChange(string stat, int modifier)
         {
             if (stat == "health")
             {
@@ -829,7 +945,7 @@ namespace Hues_Adventure
             }
         }
 
-        private static bool selectionSim(ref int source, int max)
+        static bool ChooseSelection(ref int source, int max)
         {
             ConsoleKey consoleKey = new ConsoleKey();
 
@@ -880,38 +996,59 @@ namespace Hues_Adventure
 
         }
 
-        private static bool prntSelectionSim(ref int cursorPos, List<string> lst, string selStart = ">> ", string selEnd = "", string start = "", string end = "")
+        static int PrintSelectionLoop(string message, List<string> list, string selStart = ">> ", string selEnd = "", string start = " - ", string end = "")
         {
+            int cursorPos = 1;
+            bool hasRun = false;
 
-            for (int i = 1; i < lst.Count; i += 1)
+            while (true)
             {
-                string item = lst[i - 1];
-                if (i == cursorPos)
+                Console.Clear();
+
+                if (hasRun)
                 {
-
-                    Console.WriteLine(selStart + item + selEnd + '\n');
-
+                    Console.WriteLine(message);
                 }
 
                 else
                 {
-                    Console.WriteLine(start + item + end + "\n");
-
-
+                    TW(message, 0);
+                    hasRun = true;
                 }
 
+                if (PrintSelection(ref cursorPos, list, selStart, selEnd, start, end))
+                {
+                    Console.Clear();
+                    return cursorPos;
+                }
+            }
+        }
 
+        static bool PrintSelection(ref int cursorPos,List<string> list, string selStart = ">> ", string selEnd = "", string start = " - ", string end = "")
+        {
+            for (int i = 1; i <= list.Count; i++)
+            {
+                string option = list[i - 1];
+
+                if (i == cursorPos)
+                {
+                    Console.WriteLine(selStart + option + selEnd);
+                }
+
+                else
+                {
+                    Console.WriteLine(start + option + end);
+                }
             }
 
-            if (selectionSim(ref cursorPos, playerInventory.Count))
+            if (ChooseSelection(ref cursorPos, list.Count))
             {
                 return true;
-
             }
             return false;
         }
 
-        private static void DisplayPlayerStats()
+        static void DisplayPlayerStats(Map map)
         {
             Console.Clear();
 
@@ -927,10 +1064,10 @@ namespace Hues_Adventure
             }
             catch { }
 
-            WaitForInput();
+            WaitForInput(map);
         }
 
-        private static void ValidateMove(ConsoleKey thisInput, ConsoleKey checkKey, int playerXY, int checkWall)
+        static void ValidateMove(ConsoleKey thisInput, ConsoleKey checkKey, int playerXY, int checkWall)
         {
             if (thisInput == checkKey && playerXY == checkWall)
             {
@@ -938,25 +1075,25 @@ namespace Hues_Adventure
             }
         }
 
-        private static void GainHP (int HP)
+        static void GainHP (int HP)
         {
             playerHP += HP;
             TW("You gained " + HP + " hit points", 300);
         }
 
-        private static void PlayerTakeDamage(int damage)
+        static void PlayerTakeDamage(int damage)
         {
             playerHP -= damage;
             Console.WriteLine("You take " + damage + " damage!");
         }
 
-        private static void GainXP(int XP)
+        static void GainXP(int XP)
         {
             playerXP += XP;
             TW("You gained " + XP + " experience points!", 300);
         }
 
-        static void Events()
+        static void Events(ref Map map)
         {
 
             //Fight monsters
@@ -998,7 +1135,7 @@ namespace Hues_Adventure
             }
 
             //Step on a chest
-            if (currentPlayerTile == "c" && eventsEnabled == true)
+            if (map[playerPos.Y][playerPos.X].Contains(GetGameObject("chest")) && eventsEnabled == true)
             {
 
                 string loot = possibleChestItems[random.Next(0, possibleChestItems.Count)].Name;
@@ -1009,13 +1146,14 @@ namespace Hues_Adventure
                 {
                     if (PlayerGetItem(loot, 1))
                     {
-                        currentPlayerTile = "C";
+                        map[playerPos.Y][playerPos.X].Remove(GetGameObject("chest"));
+                        map[playerPos.Y][playerPos.X].Add(GetGameObject("open chest"));
                     }
                 }
             }
 
             //step on a tree
-            if (currentPlayerTile == "t" && eventsEnabled == true)
+            if (map[playerPos.Y][playerPos.X].Contains(GetGameObject("tree")) && eventsEnabled == true)
             {
                 if (CheckInvtryName("axe"))
                 {
@@ -1023,7 +1161,7 @@ namespace Hues_Adventure
 
                     if (yesAnswers.Contains(GetInput()))
                     {
-                        CurrentTileErase();
+                        GameObjectErase(ref map, GetGameObject("tree"));
                         TW("You chopped down the tree", 400);
                         PlayerGetItem("wood", 1);
                     }
@@ -1041,7 +1179,7 @@ namespace Hues_Adventure
             }
 
             //step on a rock
-            if (currentPlayerTile == "r" && eventsEnabled == true)
+            if (map[playerPos.Y][playerPos.X].Contains(GetGameObject("rock")) && eventsEnabled == true)
             {
                 if (CheckInvtryName("pickaxe"))
                 {
@@ -1049,7 +1187,7 @@ namespace Hues_Adventure
 
                     if (yesAnswers.Contains(GetInput()))
                     {
-                        CurrentTileErase();
+                        GameObjectErase(ref map, GetGameObject("rock"));
                         TW("You broke down the rock", 400);
 
                         PlayerGetItem("stone", 1);
@@ -1092,7 +1230,7 @@ namespace Hues_Adventure
             return false;
         }
 
-        static void UpdatePlayerLevel()
+        static void UpdatePlayerLevel(Map map)
         {
             if (playerXP >= 30)
             {
@@ -1102,11 +1240,11 @@ namespace Hues_Adventure
                 playerStrength += 1;
                 playerXP -= 30;
 
-                DisplayPlayerStats();
+                DisplayPlayerStats(map);
             }
         }
 
-        static void WaitForInput()
+        static void WaitForInput(Map map)
         {
             Console.WriteLine("\nPress any key to exit");
             while (Console.KeyAvailable == false)
@@ -1115,7 +1253,7 @@ namespace Hues_Adventure
             }
 
             Console.Clear();
-            PrintMap(Town.mapX, Town.mapY, Town.mapList);
+            PrintMap(map);
 
             if (Console.KeyAvailable == true)
             {
@@ -1123,6 +1261,18 @@ namespace Hues_Adventure
             }
         }
 
+        static GameObject GetGameObject(string name)
+        {
+            foreach (GameObject gameObject in gameObjects)
+            {
+                if (name == gameObject.Name)
+                {
+                    return gameObject;
+                }
+            }
+
+            return null;
+        }
     }
 }
 
