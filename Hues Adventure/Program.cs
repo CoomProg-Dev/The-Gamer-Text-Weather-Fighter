@@ -18,6 +18,7 @@ namespace Hues_Adventure
 
     class Item
     {
+        public int Quantity { get; set; }
         public string Name { get; set; }
         public int Weight { get; set; }
 
@@ -33,7 +34,7 @@ namespace Hues_Adventure
         public int Damage { get; set; }
 
         //the Goodness of the weapon: 1 is perfect 0 is broken
-        public int Quality { get; set; }
+        public float Quality { get; set; }
 
         public Weapon(string Name, int Weight, int Damage) : base(Name, Weight)
         {
@@ -42,11 +43,23 @@ namespace Hues_Adventure
 
     }
 
-    class Materials : Item
+    class Material : Item
     {
-        public Materials(string Name, int Weight) : base(Name, Weight)
+        public Material(string Name, int Weight) : base(Name, Weight)
         {
 
+        }
+    }
+
+    class Consumable : Item
+    {
+        public string BuffType { get; set; }
+        public int Modifier { get; set; }
+
+        public Consumable(string Name, int Weight, string buffType, int modifier) : base(Name, Weight)
+        {
+            BuffType = buffType;
+            Modifier = modifier;
         }
     }
 
@@ -69,14 +82,12 @@ namespace Hues_Adventure
     class Program
     {
 
-        #region INITIALIZE OBJECTS/LISTS
-
         // Possible Maps
 
         static Map Town = new Map();
 
         //Possible Monsters that the player can fight
-        static readonly List<Monster> possibleMonsters = new List<Monster>()
+        static List<Monster> possibleMonsters = new List<Monster>()
         {
             new Monster("goblin", 10, 5, 10),
             new Monster("orc", 30, 6, 30),
@@ -91,9 +102,9 @@ namespace Hues_Adventure
             new Weapon("axe", 14, 13),
             new Weapon("spear", 5, 10),
             new Weapon("pickaxe", 10, 7),
-            new Item("wood", 1),
-            new Item("stone", 2),
-            new Item("food", 1)
+            new Material("wood", 1),
+            new Material("stone", 2),
+            new Consumable("healing potion", 2 , "health", 25)
         };
 
         //Possible items that could be found in a chest
@@ -104,7 +115,7 @@ namespace Hues_Adventure
             new Weapon("axe", 14, 13),
             new Weapon("spear", 5, 10),
             new Weapon("pickaxe", 10, 7),
-            new Item("food", 1)
+            new Consumable("healing potion", 2 , "health", 25)
         };
 
         //stores all the possible tiles used to generate maps
@@ -135,23 +146,23 @@ namespace Hues_Adventure
 
         //A varible to see if the palyer wants to incratct with things
         static bool eventsEnabled = true;
-        #endregion
 
-        /* %%%%%%%%%%%%% PLAYER STATS %%%%%%%%%%%%% */
-        #region PLAYER STATS/IMPOTANT VARIBALES
         //Player Things-------------
         static bool playerAlive = false;
         static int playerX = 0;
         static int playerY = 0;
         static string currentPlayerTile = "b";
+        static int maxPlayerHP = 100;
         static int playerHP = 100;
+        static int playerXP = 0;
+        static int playerStrength = 1;
         static List<Item> playerInventory = new List<Item>();
+        static int currentItemWeight = 0;
+        static int maxCarryWeight = 30;
         static Weapon playerCurWeapon = null;
 
-        #endregion
 
-        /* %%%%%%%%%%%%% MAIN %%%%%%%%%%%%% */
-        #region MAIN
+
         static void Main(string[] args)
         {
 
@@ -168,6 +179,10 @@ namespace Hues_Adventure
                 {
                     playerAlive = true;
                 }
+                else
+                {
+                    Environment.Exit(0);
+                }
 
                 Town.mapList = MapGen(Town.mapX, Town.mapY, Town.mapList, Town.isGenerated);
 
@@ -182,6 +197,8 @@ namespace Hues_Adventure
 
                     Events();
 
+                    UpdatePlayerLevel();
+
                     if (playerHP <= 0)
                     {
                         playerAlive = false;
@@ -193,10 +210,6 @@ namespace Hues_Adventure
                 TW("-------------Game Over-------------", 0);
             }
         }
-        #endregion
-
-        /* %%%%%%%%%%%%% EXTRA FUNCTIONS %%%%%%%%%%%%% */
-        #region EXTRA FUNCTIONS
 
         static void TW(string text, int waitTime)
         {
@@ -215,42 +228,71 @@ namespace Hues_Adventure
                 }
             }
             System.Threading.Thread.Sleep(waitTime);
-            Console.WriteLine(); 
+            Console.WriteLine();
 
         }
 
-        static void PlayerGetItem(string name)
+        static bool PlayerGetItem(string name, int quantity)
         {
             foreach (Item item in possibleItems)
             {
                 if (item.Name == name)
                 {
-                    Console.WriteLine("You picked up this item: " + item.Name);
-
-                    if (item.GetType() == typeof(Weapon))
+                    if (item.Weight * quantity + currentItemWeight <= maxCarryWeight)
                     {
+                        Console.WriteLine("You picked up this item: " + item.Name);
 
-                        Weapon weapon = (Weapon)item;
-
-                        weapon.Quality = random.Next(50, 100) / 100;
-
-                        playerInventory.Add(weapon);
-                        
-                        Console.WriteLine("The quality of this item is: " + weapon.Quality);
-
-                        if (playerCurWeapon == null)
+                        if (item.GetType() == typeof(Weapon))
                         {
-                            playerCurWeapon = weapon;
+
+                            Weapon weapon = (Weapon)item;
+
+                            weapon.Quantity = 1;
+                            weapon.Quality = random.Next(50, 100) / 100f;
+
+                            playerInventory.Add(weapon);
+
+                            Console.WriteLine("The quality of this item is: " + weapon.Quality);
+
+                            if (playerCurWeapon == null)
+                            {
+                                playerCurWeapon = weapon;
+                            }
                         }
+
+                        else
+                        {
+                            bool itemFound = false;
+                            int i = 0;
+
+                            foreach (Item item1 in playerInventory)
+                            {
+                                if (item1.Name == item.Name)
+                                {
+                                    playerInventory[i].Quantity += quantity;
+                                    itemFound = true;
+                                }
+                                i++;
+                            }
+
+                            if (!itemFound)
+                            {
+                                item.Quantity += quantity;
+                                playerInventory.Add(item);
+                            }
+                        }
+
+                        currentItemWeight += item.Weight * quantity;
+                        return true;
                     }
 
                     else
                     {
-
-                        playerInventory.Add(item);
+                        TW("You cannot pick up this item... It is too heavy", 300);
                     }
                 }
             }
+            return false;
         }
 
         static void GameReset()
@@ -260,15 +302,23 @@ namespace Hues_Adventure
             playerY = 0;
             currentPlayerTile = "b";
             playerHP = 100;
-            playerInventory = new List<Item>();
+            maxPlayerHP = 100;
+            playerStrength = 1;
+            playerInventory.Clear();
+            currentItemWeight = 0;
+            maxCarryWeight = 30;
+            playerCurWeapon = null;
 
             Town.isGenerated = false;
+
+            possibleMonsters = new List<Monster>()
+            {
+                new Monster("goblin", 10, 5, 10),
+                new Monster("orc", 30, 6, 30),
+                new Monster("ghost", 15, 10, 20),
+                new Monster("zombie", 20, 7, 15)
+            };
         }
-
-        #endregion
-
-        /* %%%%%%%%%%%%% MAP STUFF %%%%%%%%%%%%% */
-        #region MAP STUFF 
 
         static void PrintMap(int mapX, int mapY, List<string> mapList)
         {
@@ -326,6 +376,7 @@ namespace Hues_Adventure
             //add a check to see if map has already been generated
             if (check == false)
             {
+                mapList.Clear();
 
                 for (int i = 0; i < mapY; i++)
                 {
@@ -367,11 +418,6 @@ namespace Hues_Adventure
             currentPlayerTile = "b";
         }
 
-        #endregion
-
-        /* %%%%%%%%%%%%% PLAYER DOES STUFF %%%%%%%%%%%%% */
-        #region PLAYER DOES STUFF
-
         static List<string> PlayerAction(List<string> map, int mapX, int mapY)
         {
 
@@ -379,7 +425,7 @@ namespace Hues_Adventure
 
             while (Console.KeyAvailable == false)
             {
-                
+
             }
 
             Console.Clear();
@@ -408,11 +454,13 @@ namespace Hues_Adventure
 
             map[playerY] = map[playerY].Substring(0, playerX) + "p" + map[playerY].Substring(playerX + 1);
 
-            
+            PrintMap(mapX, mapY, map);
+
             //display inventory
             if (thisInput == ConsoleKey.Tab)
             {
-                DisplayInventory(ConsoleKey.Tab);
+                DisplayInventory();
+                PlayerAction(map, mapX, mapY);
             }
 
             //quit the game
@@ -424,10 +472,25 @@ namespace Hues_Adventure
             //select main weapon
             if (thisInput == ConsoleKey.Q)
             {
+                eventsEnabled = !eventsEnabled;
+                if (eventsEnabled)
+                {
+                    TW("Events are enabled", 300);
+                }
 
+                if (!eventsEnabled)
+                {
+                    TW("Events are disabled", 300);
+                }
+
+                PlayerAction(map, mapX, mapY);
             }
 
-            PrintMap(mapX, mapY, map);
+            if (thisInput == ConsoleKey.E)
+            {
+                DisplayPlayerStats();
+                PlayerAction(map, mapX, mapY);
+            }
 
             return map;
         }
@@ -468,17 +531,308 @@ namespace Hues_Adventure
             }
         }
 
-        private static void DisplayInventory( ConsoleKey thisInput)
+        private static void DisplayInventory()
         {
-            Console.WriteLine("Inventory:");
-            int i = 1;
-            foreach (Item item in playerInventory)
+            int cursorPos = 1;
+
+            while (true)
             {
-                
-                Console.WriteLine(i.ToString()+ ". " + item.Name);
-                Console.WriteLine("");
-                i++;
-            } 
+                Console.Clear();
+
+                Console.WriteLine("Inventory:");
+
+                int i = 1;
+
+                foreach (Item item in playerInventory)
+                {
+                    if (i == cursorPos)
+                    {
+                        if (item.Quantity > 1)
+                        {
+                            Console.WriteLine(">> " + item.Name + " " + item.Quantity);
+                            Console.WriteLine("");
+                        }
+
+                        else
+                        {
+                            Console.WriteLine(">> " + item.Name);
+                            Console.WriteLine("");
+                        }
+                    }
+
+                    else
+                    {
+                        if (item.Quantity > 1)
+                        {
+                            Console.WriteLine(i.ToString() + ". " + item.Name + " " + item.Quantity);
+                            Console.WriteLine("");
+                        }
+
+                        else
+                        {
+                            Console.WriteLine(i.ToString() + ". " + item.Name);
+                            Console.WriteLine("");
+                        }
+                    }
+
+                    i++;
+                }
+
+                if (playerInventory.Count != 0)
+                {
+                    if (selectionSim(ref cursorPos, playerInventory.Count))
+                    {
+                        DisplayItem(playerInventory[cursorPos - 1], cursorPos - 1);
+                        WaitForInput();
+                        break;
+                    }
+                }
+
+                else
+                {
+                    break;
+                }
+            }
+        }
+
+        private static void DisplayItem(Item item, int index)
+        {
+
+
+            if (item.GetType() == typeof(Material))
+            {
+                Material material = (Material)item;
+                List<string> options = new List<string>() { "Craft", "Drop", "Exit" };
+
+                int cursorPos = 1;
+
+                while (true)
+                {
+                    Console.Clear();
+
+                    Console.WriteLine("-----" + material.Name + "-----");
+                    Console.WriteLine("Quantity: " + material.Quantity);
+                    Console.WriteLine("Total Weight: " + (int)(material.Weight * material.Quantity));
+
+                    int i = 1;
+
+                    foreach (String s in options)
+                    {
+                        if (i == cursorPos)
+                        {
+                            Console.WriteLine(">> " + options[i - 1]);
+                        }
+
+                        else
+                        {
+                            Console.WriteLine(i + ". " + options[i - 1]);
+                        }
+
+                        i++;
+                    }
+
+                    if (selectionSim(ref cursorPos, options.Count))
+                    {
+                        if (options[cursorPos - 1] == options[0])
+                        {
+                            if (material.Quantity == 1)
+                            {
+                                playerInventory.RemoveAt(index);
+                            }
+
+                            else
+                            {
+                                material.Quantity -= 1;
+                            }
+
+                            Console.WriteLine("This function doesn't function yet");
+
+                            break;
+                        }
+
+                        if (options[cursorPos - 1] == options[1])
+                        {
+                            if (material.Quantity == 1)
+                            {
+                                playerInventory.RemoveAt(index);
+                            }
+
+                            else
+                            {
+                                material.Quantity -= 1;
+                            }
+
+                            break;
+                        }
+
+                        if (options[cursorPos - 1] == options[2])
+                        {
+                            break;
+                        }
+                    }
+                }
+            }
+
+            if (item.GetType() == typeof(Consumable))
+            {
+                Consumable consumable = (Consumable)item;
+                List<string> options = new List<string>() { "Use", "Drop", "Exit" };
+
+                int cursorPos = 1;
+
+                while (true)
+                {
+                    Console.Clear();
+
+                    Console.WriteLine("-----" + consumable.Name + "-----");
+                    Console.WriteLine("Quantity: " + consumable.Quantity);
+                    Console.WriteLine("Info: " + consumable.BuffType.Substring(0, 1).ToUpper() + consumable.BuffType.Substring(1) + " +" + consumable.Modifier);
+                    Console.WriteLine("Total Weight: " + (int)(consumable.Weight * consumable.Quantity));
+
+                    int i = 1;
+
+                    foreach (String s in options)
+                    {
+                        if (i == cursorPos)
+                        {
+                            Console.WriteLine(">> " + options[i - 1]);
+                        }
+
+                        else
+                        {
+                            Console.WriteLine(i + ". " + options[i - 1]);
+                        }
+
+                        i++;
+                    }
+
+                    if (selectionSim(ref cursorPos, options.Count))
+                    {
+                        if (options[cursorPos - 1] == options[0])
+                        {
+                            if (consumable.Quantity == 1)
+                            {
+                                playerInventory.RemoveAt(index);
+                            }
+
+                            else
+                            {
+                                consumable.Quantity -= 1;
+                            }
+
+                            PlayerStatChange(consumable.BuffType, consumable.Modifier);
+
+                            break;
+                        }
+
+                        if (options[cursorPos - 1] == options[1])
+                        {
+                            if (consumable.Quantity == 1)
+                            {
+                                playerInventory.RemoveAt(index);
+                            }
+
+                            else
+                            {
+                                consumable.Quantity -= 1;
+                            }
+
+                            break;
+                        }
+
+                        if (options[cursorPos - 1] == options[2])
+                        {
+                            break;
+                        }
+                    }
+                }
+            }
+
+            if (item.GetType() == typeof(Weapon))
+            {
+                Weapon weapon = (Weapon)item;
+                List<string> options = new List<string>() { "Equip", "Drop", "Exit" };
+
+                int cursorPos = 1;
+
+                while (true)
+                {
+                    Console.Clear();
+
+                    Console.WriteLine("-----" + weapon.Name + "-----");
+                    Console.WriteLine("Damage: " + weapon.Damage);
+                    Console.WriteLine("Quality: " + weapon.Quality);
+                    Console.WriteLine("Total Weight: " + (int)(weapon.Weight * weapon.Quantity));
+
+                    int i = 1;
+
+                    foreach (String s in options)
+                    {
+                        if (i == cursorPos)
+                        {
+                            Console.WriteLine(">> " + options[i - 1]);
+                        }
+
+                        else
+                        {
+                            Console.WriteLine(i + ". " + options[i - 1]);
+                        }
+
+                        i++;
+                    }
+
+                    if (selectionSim(ref cursorPos, options.Count))
+                    {
+                        if (options[cursorPos - 1] == options[0])
+                        {
+                            playerCurWeapon = weapon;
+
+                            break;
+                        }
+
+                        if (options[cursorPos - 1] == options[1])
+                        {
+                            if (playerInventory[index] == playerCurWeapon)
+                            {
+                                playerCurWeapon = null;
+                            }
+
+                            playerInventory.RemoveAt(index);
+
+                            break;
+                        }
+
+                        if (options[cursorPos - 1] == options[2])
+                        {
+                            break;
+                        }
+                    }
+                }
+            }
+        }
+
+        private static void PlayerStatChange(string stat, int modifier)
+        {
+            if (stat == "health")
+            {
+                GainHP(modifier);
+            }
+
+            if (stat == "maxHealth")
+            {
+                maxPlayerHP += modifier;
+            }
+
+            if (stat == "strength")
+            {
+                playerStrength += modifier;
+            }
+        }
+
+        private static bool selectionSim(ref int source, int max)
+        {
+            ConsoleKey consoleKey = new ConsoleKey();
+
 
             while (!Console.KeyAvailable)
             {
@@ -487,8 +841,93 @@ namespace Hues_Adventure
 
             if (Console.KeyAvailable)
             {
-                Console.ReadKey(true);
+                consoleKey = Console.ReadKey(true).Key;
             }
+
+            if (consoleKey == ConsoleKey.W || consoleKey == ConsoleKey.UpArrow)
+            {
+                if (source == 1)
+                {
+                    source = max;
+                }
+
+                else
+                {
+                    source -= 1;
+                }
+            }
+
+            if (consoleKey == ConsoleKey.S || consoleKey == ConsoleKey.DownArrow)
+            {
+                if (source == max)
+                {
+                    source = 1;
+                }
+
+                else
+                {
+                    source += 1;
+                }
+            }
+
+            if (consoleKey == ConsoleKey.Enter)
+            {
+                return true;
+            }
+
+
+            return false;
+
+        }
+
+        private static bool prntSelectionSim(ref int cursorPos, List<string> lst, string selStart = ">> ", string selEnd = "", string start = "", string end = "")
+        {
+
+            for (int i = 1; i < lst.Count; i += 1)
+            {
+                string item = lst[i - 1];
+                if (i == cursorPos)
+                {
+
+                    Console.WriteLine(selStart + item + selEnd + '\n');
+
+                }
+
+                else
+                {
+                    Console.WriteLine(start + item + end + "\n");
+
+
+                }
+
+
+            }
+
+            if (selectionSim(ref cursorPos, playerInventory.Count))
+            {
+                return true;
+
+            }
+            return false;
+        }
+
+        private static void DisplayPlayerStats()
+        {
+            Console.Clear();
+
+            Console.WriteLine("Health: " + playerHP);
+            Console.WriteLine("Max Health: " + maxPlayerHP);
+            Console.WriteLine("Strength: " + playerStrength);
+            Console.WriteLine("Experience Points: " + playerXP);
+            Console.WriteLine("Current Item Weight: " + currentItemWeight);
+            Console.WriteLine("Maximum Carry Weight: " + maxCarryWeight);
+            try
+            {
+                Console.WriteLine("Current Weapon: " + playerCurWeapon.Name);
+            }
+            catch { }
+
+            WaitForInput();
         }
 
         private static void ValidateMove(ConsoleKey thisInput, ConsoleKey checkKey, int playerXY, int checkWall)
@@ -499,26 +938,32 @@ namespace Hues_Adventure
             }
         }
 
+        private static void GainHP (int HP)
+        {
+            playerHP += HP;
+            TW("You gained " + HP + " hit points", 300);
+        }
+
         private static void PlayerTakeDamage(int damage)
         {
             playerHP -= damage;
             Console.WriteLine("You take " + damage + " damage!");
-            System.Threading.Thread.Sleep(100);
         }
 
-
-        private static void SetCurrentWeapon()
+        private static void GainXP(int XP)
         {
-            
+            playerXP += XP;
+            TW("You gained " + XP + " experience points!", 300);
         }
 
         static void Events()
         {
 
             //Fight monsters
-            if (random.Next(1,7) == 1)
+            if (random.Next(1, 9) == 1)
             {
-                Monster monster = possibleMonsters[random.Next(0, possibleMonsters.Count)];
+                int randMonster = random.Next(0, possibleMonsters.Count);
+                Monster monster = new Monster(possibleMonsters[randMonster].Name, possibleMonsters[randMonster].Health, possibleMonsters[randMonster].Damage, possibleMonsters[randMonster].XP);
                 monster.Damage += random.Next(-3, 4);
                 monster.Health += random.Next(-3, 4);
                 monster.XP += random.Next(-3, 4);
@@ -528,16 +973,27 @@ namespace Hues_Adventure
                 while (monster.Health > 0 && playerHP > 0)
                 {
                     PlayerTakeDamage(monster.Damage);
+                    System.Threading.Thread.Sleep(300);
 
                     try
                     {
-                        monster.Health -= playerCurWeapon.Damage * playerCurWeapon.Quality;
+                        int playerDamage = (int)(playerCurWeapon.Damage * playerCurWeapon.Quality) + random.Next(1, 4) + playerStrength;
+                        monster.Health -= playerDamage;
+                        Console.WriteLine("You deal " + playerDamage + " to the " + monster.Name + " with your " + playerCurWeapon.Name);
+                    }
+                    catch (NullReferenceException)
+                    {
+                        int playerDamage = random.Next(1, 4) + playerStrength;
+                        monster.Health -= playerDamage;
+                        Console.WriteLine("You deal " + playerDamage + " damage to the " + monster.Name + " with your fists");
                     }
 
-                    catch
-                    {
-                        monster.Health -= random.Next(1,4);
-                    }
+                    System.Threading.Thread.Sleep(300);
+                }
+
+                if (monster.Health <= 0)
+                {
+                    GainXP(monster.XP);
                 }
             }
 
@@ -551,13 +1007,15 @@ namespace Hues_Adventure
 
                 if (yesAnswers.Contains(GetInput()))
                 {
-                    currentPlayerTile = "C";
-                    PlayerGetItem(loot);
+                    if (PlayerGetItem(loot, 1))
+                    {
+                        currentPlayerTile = "C";
+                    }
                 }
             }
 
             //step on a tree
-            if (currentPlayerTile == "t")
+            if (currentPlayerTile == "t" && eventsEnabled == true)
             {
                 if (CheckInvtryName("axe"))
                 {
@@ -567,7 +1025,7 @@ namespace Hues_Adventure
                     {
                         CurrentTileErase();
                         TW("You chopped down the tree", 400);
-                        PlayerGetItem("wood");
+                        PlayerGetItem("wood", 1);
                     }
 
                     else
@@ -583,7 +1041,7 @@ namespace Hues_Adventure
             }
 
             //step on a rock
-            if (currentPlayerTile == "r")
+            if (currentPlayerTile == "r" && eventsEnabled == true)
             {
                 if (CheckInvtryName("pickaxe"))
                 {
@@ -594,11 +1052,11 @@ namespace Hues_Adventure
                         CurrentTileErase();
                         TW("You broke down the rock", 400);
 
-                        PlayerGetItem("stone");
+                        PlayerGetItem("stone", 1);
 
-                        if (random.Next(1,3) == 1)
+                        if (random.Next(1, 3) == 1)
                         {
-                            PlayerGetItem("iron");
+                            PlayerGetItem("iron", 1);
                         }
                     }
 
@@ -614,11 +1072,6 @@ namespace Hues_Adventure
                 }
             }
         }
-
-        #endregion
-
-        /* %%%%%%%%%%%%% CHECKS %%%%%%%%%%%%% */
-        #region CHECKS
 
         static string GetInput()
         {
@@ -639,6 +1092,37 @@ namespace Hues_Adventure
             return false;
         }
 
-        #endregion
+        static void UpdatePlayerLevel()
+        {
+            if (playerXP >= 30)
+            {
+                TW("You leveled up!", 300);
+                maxCarryWeight = (int)(maxCarryWeight * 1.2);
+                maxPlayerHP = (int)(maxPlayerHP * 1.2);
+                playerStrength += 1;
+                playerXP -= 30;
+
+                DisplayPlayerStats();
+            }
+        }
+
+        static void WaitForInput()
+        {
+            Console.WriteLine("\nPress any key to exit");
+            while (Console.KeyAvailable == false)
+            {
+
+            }
+
+            Console.Clear();
+            PrintMap(Town.mapX, Town.mapY, Town.mapList);
+
+            if (Console.KeyAvailable == true)
+            {
+                Console.ReadKey(true);
+            }
+        }
+
     }
 }
+
