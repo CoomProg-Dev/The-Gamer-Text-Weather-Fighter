@@ -713,8 +713,6 @@ namespace Hues_Adventure
 
         static void DisplayItem(Item item, int index)
         {
-
-
             if (item.GetType() == typeof(Material))
             {
                 Material material = (Material)item;
@@ -938,7 +936,7 @@ namespace Hues_Adventure
             {
                 maxPlayerHP += modifier;
             }
-
+          
             if (stat == "strength")
             {
                 playerStrength += modifier;
@@ -948,7 +946,6 @@ namespace Hues_Adventure
         static bool ChooseSelection(ref int source, int max)
         {
             ConsoleKey consoleKey = new ConsoleKey();
-
 
             while (!Console.KeyAvailable)
             {
@@ -991,9 +988,7 @@ namespace Hues_Adventure
                 return true;
             }
 
-
             return false;
-
         }
 
         static int PrintSelectionLoop(string message, List<string> list, string selStart = ">> ", string selEnd = "", string start = " - ", string end = "")
@@ -1243,7 +1238,7 @@ namespace Hues_Adventure
                 DisplayPlayerStats(map);
             }
         }
-
+      
         static void WaitForInput(Map map)
         {
             Console.WriteLine("\nPress any key to exit");
